@@ -4,5 +4,5 @@
 }
 
 body{
-        background-image: url(images/bgimage.png);
+        background: url(../images/cubes.png) repeat 0 0;
 }
