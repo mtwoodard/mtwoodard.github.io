@@ -2,3 +2,7 @@
     margin-top: 20rem;
     text-align: center;
 }
+
+body{
+        background-image: url(images/bgimage.png);
+}
