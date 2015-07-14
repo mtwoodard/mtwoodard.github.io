@@ -26,12 +26,13 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link rel="icon" type="image/png" href="images/favicon.png">
 
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
 </head>
-<body>
+<body ng-app="mtwoodardApp">
 
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container wrapper">
+  <div ng-controller="myCtrl" ng-init="init()" class="container">
     <section class="header">
       <h1 class="title">Michael Woodard</h1>
       <div class="row logos">
@@ -46,9 +47,16 @@
         </div>
       </div>
     </section>
+    <div class="offset-by-five columns">
+      <button ng-show="secret" ng-click="pumpIt()">Pump It Up</button>
+      <audio ng-if="pumpedUp" autoplay>
+        <source src="pump.mp3" type="audio/mpeg">
+      </audio>
+    </div>
   </div>
 
 <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <script src ="custom.js"></script>
 </body>
 </html>
