@@ -6,3 +6,11 @@
 body{
         background: url(../images/cubes.png) repeat 0 0;
 }
+
+.content{
+    text-align: center;  
+}
+
+.spacer{
+    padding: 2rem;   
+}
