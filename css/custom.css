@@ -1,6 +1,6 @@
 /*General classes*/
 body{
-        background: url(../images/cubes.png) repeat 0 0;
+    background: url(../images/cubes.png) repeat 0 0;
 }
 
 a{
@@ -14,22 +14,25 @@ a:hover{
   font-weight: bold;
 }
 
-.content{
+.index{
     text-align: center;
 }
 
-.spacer{
-    padding: 2rem;
+/*Portfolio Classes*/
+.portfolio-slide{
+  padding-top:12rem;
+}
+.portfolio-cosmic{
+  padding-top:10rem;
+}
+.portfolio-github{
+  padding-top:5rem;
+  text-align: center;
 }
 
 
 /*Navbar classes*/
 @media(min-width:517px){
-  .portfolio-title{
-    margin-top: 10rem;
-    text-align: center;
-  }
-
   .header{
     margin-top: 20rem;
     text-align: center;
@@ -68,10 +71,6 @@ a:hover{
 }
 
 @media(max-width:516px){
-  .portfolio-title{
-    margin-top: -40px;
-    text-align: center;
-  }
   .header{
     margin-top: -40px;
     text-align: center;
