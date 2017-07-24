@@ -19,9 +19,7 @@ a:hover{
 }
 
 /*Portfolio Classes*/
-.portfolio-slide{
-  padding-top:12rem;
-}
+
 .portfolio-cosmic{
   padding-top:10rem;
 }
@@ -36,6 +34,10 @@ a:hover{
   .header{
     margin-top: 20rem;
     text-align: center;
+  }
+
+  .portfolio-slide{
+    padding-top:12rem;
   }
 
   .navbar{
@@ -75,6 +77,11 @@ a:hover{
     margin-top: -40px;
     text-align: center;
   }
+
+  .portfolio-slide{
+    padding-top:4rem;
+  }
+
   .navbar-list{
     list-style: none;
   }
