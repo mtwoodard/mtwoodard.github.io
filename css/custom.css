@@ -21,6 +21,7 @@ a:hover{
   -o-transition-duration: 0.5s;
   transition: 0.5s;
 }
+
 /*Contact Classes*/
 input[type=submit]{
   width:20rem;
@@ -45,21 +46,6 @@ input[type=text]:focus, textarea:focus{
 }
 
 /*Index Classes*/
-.index-image{
-  -webkit-transition-duration: 1s;
-  -moz-transition-duration: 1s;
-  -o-transition-duration: 1s;
-  transition-duration: 1s;
-}
-
-.index-image:hover{
-  transform: scale(1.5);
-  -webkit-transition-duration: 1s;
-  -moz-transition-duration: 1s;
-  -o-transition-duration: 1s;
-  transition-duration: 1s;
-}
-
 .index{
     text-align: center;
 }
@@ -74,20 +60,35 @@ input[type=text]:focus, textarea:focus{
   text-align: center;
 }
 
-.portfolio-image:hover{
-    transform: scale(1.1);
-    -webkit-transition-duration: 1s;
-    -moz-transition-duration: 1s;
-    -o-transition-duration: 1s;
-    transition-duration: 1s;
-  }
-
 /*Navbar classes*/
 @media(min-width:550px){
   .header{
     margin-top: 20rem;
     text-align: center;
   }
+
+  .index-image{
+    -webkit-transition-duration: 1s;
+    -moz-transition-duration: 1s;
+    -o-transition-duration: 1s;
+    transition-duration: 1s;
+  }
+
+  .index-image:hover{
+    transform: scale(1.5);
+    -webkit-transition-duration: 1s;
+    -moz-transition-duration: 1s;
+    -o-transition-duration: 1s;
+    transition-duration: 1s;
+  }
+
+  .portfolio-image:hover{
+      transform: scale(1.1);
+      -webkit-transition-duration: 1s;
+      -moz-transition-duration: 1s;
+      -o-transition-duration: 1s;
+      transition-duration: 1s;
+    }
 
   .portfolio-slide{
     padding-top:12rem;
