@@ -7,11 +7,57 @@ a{
   text-decoration: none;
   color: grey;
   font-weight: bold;
+  -webkit-transition-duration: 0.5s;
+  -moz-transition-duration: 0.5s;
+  -o-transition-duration: 0.5s;
+  transition: 0.5s;
 }
 
 a:hover{
-  color: black;
+  color: #fe9720;
   font-weight: bold;
+  -webkit-transition-duration: 0.5s;
+  -moz-transition-duration: 0.5s;
+  -o-transition-duration: 0.5s;
+  transition: 0.5s;
+}
+/*Contact Classes*/
+input[type=submit]{
+  width:20rem;
+  height:5rem;
+  -webkit-transition-duration: 0.5s;
+  -moz-transition-duration: 0.5s;
+  -o-transition-duration: 0.5s;
+  transition: 0.5s;
+}
+
+input[type=submit]:hover{
+  background-color: #fe9720;
+  transform: scale(1.1);
+  -webkit-transition-duration: 0.5s;
+  -moz-transition-duration: 0.5s;
+  -o-transition-duration: 0.5s;
+  transition-duration: 0.5s;
+}
+
+input[type=text]:focus, textarea:focus{
+  border:1px solid #fe9720;
+}
+
+/*Index Classes*/
+.index-image{
+  -webkit-transition-duration: 1s;
+  -moz-transition-duration: 1s;
+  -o-transition-duration: 1s;
+  transition-duration: 1s;
+}
+
+.index-image:hover{
+  transform: scale(1.5);
+  -webkit-transition-duration: 1s;
+  -moz-transition-duration: 1s;
+  -o-transition-duration: 1s;
+  transition-duration: 1s;
 }
 
 .index{
@@ -28,6 +74,13 @@ a:hover{
   text-align: center;
 }
 
+.portfolio-image:hover{
+    transform: scale(1.1);
+    -webkit-transition-duration: 1s;
+    -moz-transition-duration: 1s;
+    -o-transition-duration: 1s;
+    transition-duration: 1s;
+  }
 
 /*Navbar classes*/
 @media(min-width:550px){
@@ -44,6 +97,21 @@ a:hover{
     max-width:125%;
     height: auto;
     border-radius: 2%;
+    -webkit-transition-duration: 1s;
+    -moz-transition-duration: 1s;
+    -o-transition-duration: 1s;
+    transition-duration: 1s;
+  }
+
+  input[type=text], textarea{
+    width: 50rem;
+    padding:12px;
+    border: 1px solid grey;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: : 6px;
+    margin-bottom: 16px;
+    resize: vertical;
   }
 
   .navbar{
@@ -92,6 +160,17 @@ a:hover{
     max-width: 100%;
     height: auto;
     width: auto\9;
+  }
+
+  input[type=text], textarea{
+    width: 80%;
+    padding:12px;
+    border: 1px solid grey;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: : 6px;
+    margin-bottom: 16px;
+    resize: vertical;
   }
 
   .navbar-list{
