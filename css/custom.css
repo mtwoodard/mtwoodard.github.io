@@ -24,7 +24,7 @@ a:hover{
 /*Contact Classes*/
 input[type=submit]{
   width:20rem;
-  height:5rem;
+  height:2rem;
   -webkit-transition-duration: 0.5s;
   -moz-transition-duration: 0.5s;
   -o-transition-duration: 0.5s;
