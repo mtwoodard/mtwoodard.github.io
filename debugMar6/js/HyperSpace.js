@@ -92,7 +92,7 @@ var init = function(){
 var loadShaders = function(){
   var loader = new THREE.FileLoader();
   loader.setResponseType('text')
-  loader.load('../shaders/fragment.glsl',function(data){finishInit(data);});
+  loader.load('shaders/fragment.glsl',function(data){finishInit(data);});
 }
 
 var finishInit = function(fShader){
