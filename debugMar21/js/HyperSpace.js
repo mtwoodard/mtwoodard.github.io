@@ -43,7 +43,7 @@ var calcMaxSteps = function(targetFPS, lastFPS, lastMaxSteps){
   }
   averageFPS /= fpsLog.length;
   //console.log(Math.floor(averageFPS));
-  zzreturn Math.max(Math.min(Math.round(Math.pow((averageFPS/targetFPS),(1/10)) * lastMaxSteps),127),31);
+  return Math.max(Math.min(Math.round(Math.pow((averageFPS/targetFPS),(1/10)) * lastMaxSteps),127),31);
 }
 
 //-------------------------------------------------------
@@ -65,7 +65,7 @@ var init = function(){
   invGens = invGenerators(gens);
   currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
-  invCellBoost = new THREE.Matrix4(); 
+  invCellBoost = new THREE.Matrix4();
   lightSourcePosition = new THREE.Vector4(0.0,0.0,0.9801960588,1.400280084); // position on hyperboloid of light source, is lorentzNormalize(0,0,.7,1)
   //We need to load the shaders from file
   //since web is async we need to wait on this to finish
@@ -91,6 +91,8 @@ var finishInit = function(fShader){
 //  console.log(fShader);
   material = new THREE.ShaderMaterial({
     uniforms:{
+      isStereo:{type: "i", value: 0},
+      cameraProjection:{type:"m4", value:new THREE.Matrix4()},
       screenResolution:{type:"v2", value:new THREE.Vector2(window.innerWidth, window.innerHeight)},
       cameraPos:{type:"v3", value:virtCamera.position},
       cameraQuat:{type:"v4", value:virtCamera.quaternion},
@@ -105,7 +107,8 @@ var finishInit = function(fShader){
       sceneIndex:{type:"i", value: 1},
       halfCubeWidthKlein:{type:"f", value: hCWK},
       sphereRad:{type:"f", value:sphereRad},
-      horosphereSize:{type:"f", value:horosphereSize}
+	  horosphereSize:{type:"f", value:horosphereSize},
+	  planeOffset:{type:"f", value:planeOffset}
     },
     vertexShader: document.getElementById('vertexShader').textContent,
     fragmentShader: fShader,
