@@ -50,7 +50,7 @@ THREE.VREffect = function ( renderer, done ) {
 		} else {
 			navigator.mozGetVRDevices( gotVRDevices );
 		}
-
+		console.log(self.leftEyeTranslation);
 		if(self.leftEyeTranslation.x !== undefined){
 			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
 			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
