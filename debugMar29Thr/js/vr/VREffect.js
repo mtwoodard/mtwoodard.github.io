@@ -34,6 +34,8 @@ THREE.VREffect = function ( renderer, done ) {
 		self.phoneVR = new PhoneVR();
 		self.leftEyeTranslation = { x: -0.03200000151991844, y: -0, z: -0, w: 0 };
 		self.rightEyeTranslation = { x: 0.03200000151991844, y: -0, z: -0, w: 0 };
+		leftCurrentBoost = translateByVector(self.leftEyeTranslation);
+		rightCurrentBoost = translateByVector(self.rightEyeTranslation);
 		self.leftEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 47.52769258067174, downDegrees: 53.04646464878503, leftDegrees: 46.63209579904155 };
 		self.rightEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 46.63209579904155, downDegrees: 53.04646464878503, leftDegrees: 47.52769258067174 };
 
@@ -51,14 +53,13 @@ THREE.VREffect = function ( renderer, done ) {
 			navigator.mozGetVRDevices( gotVRDevices );
 		}
 		console.log(self.leftEyeTranslation);
-		if(self.leftEyeTranslation.x !== undefined){
-			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
-			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
+		/*if(self.leftEyeTranslation.x !== undefined){
+
 		}
 		else{
 			leftCurrentBoost = translateByVector(self.leftEyeTranslation[0]);
 			rightCurrentBoost = translateByVector(self.rightEyeTranslation[0]);
-		}
+		}*/
 
 		function gotVRDisplay( devices ) {
 			var vrHMD;
