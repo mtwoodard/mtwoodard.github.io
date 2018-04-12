@@ -62,7 +62,7 @@ float localSceneHSDF(vec4 samplePoint){
     float final = edgesDistance;
     return final;
   }
-  else if(sceneIndex == 4){  // edge medial surfaces
+  /*else if(sceneIndex == 4){  // edge medial surfaces
     samplePoint = abs(samplePoint);
     // //now reflect until smallest xyz coord is z, and largest is x
     if(samplePoint.x < samplePoint.z){
@@ -90,7 +90,7 @@ float localSceneHSDF(vec4 samplePoint){
 
     float final = 0.5*edgesDistance - 0.5*dualEdgesDistance;
     return final;
-  }
+  }*/
   else if(sceneIndex == 5){  // cube sides
     /// draw sides of the cube fundamental domain
     vec4 dualPoint0 = lorentzNormalize(vec4(1.0/halfCubeWidthKlein,0.0,0.0,1.0));
