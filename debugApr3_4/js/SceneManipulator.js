@@ -3,6 +3,7 @@ var invGens;
 var hCWH = 0.6584789485;
 var hCWK = 0.5773502692;
 var sphereRad = 0.996216;
+var tubeRad = 0.15;
 var horosphereSize = -0.951621;
 var planeOffset = 0.75;
 
@@ -56,6 +57,9 @@ function updateUniformsFromUI(gI)
 	// Make hOffset a UI parameter??
 	var hOffset = gI.edgeThickness / 10;
 
+  //Tube Radius
+  tubeRad = gI.edgeThickness/10;
+
 	// sphereRad
 	sphereRad = midrad - hOffset;
 
@@ -76,6 +80,7 @@ function updateUniformsFromUI(gI)
 	material.uniforms.invGenerators.value = invGens;
 	material.uniforms.halfCubeWidthKlein.value = hCWK;
 	material.uniforms.sphereRad.value = sphereRad;
+  material.uniforms.tubeRad.value = tubeRad;
 	material.uniforms.horosphereSize.value = horosphereSize;
 	material.uniforms.planeOffset.value = planeOffset;
   material.uniforms.lightingModel.value = gI.lightingModel;
@@ -89,8 +94,8 @@ var initGui = function(){
     lightingModel:1
   };
   var gui = new dat.GUI();
-  gui.add(material.uniforms.sceneIndex, 'value',{Sphere_horosphere: 1, Sphere_plane: 2, Medial_surface: 3, Cube_planes: 4}).name("Scene");
-  var lightingController = gui.add(guiInfo, 'lightingModel', {"Standard":1}).name("Lighting Model");
+  gui.add(material.uniforms.sceneIndex, 'value',{Sphere_horosphere: 1, Sphere_plane: 2, Edge_tubes: 3, Medial_surface: 4, Cube_planes: 5}).name("Scene");
+  var lightingController = gui.add(guiInfo, 'lightingModel', {"Standard":0, "Foo": 1}).name("Lighting Model");
   var edgeController = gui.add(guiInfo, 'edgeCase', {"5":1, "6":2, "7":3, "8":4, "9":5, "10":6, "11":7, "12":8}).name("Edge Degree");
   var thicknessController = gui.add(guiInfo, 'edgeThickness', 0, 5).name("Edge Thickness");
 
