@@ -36,6 +36,7 @@ THREE.VREffect = function ( renderer, done ) {
 		self.rightEyeTranslation = { x: 0.03200000151991844, y: -0, z: -0, w: 0 };
 		self.leftEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 47.52769258067174, downDegrees: 53.04646464878503, leftDegrees: 46.63209579904155 };
 		self.rightEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 46.63209579904155, downDegrees: 53.04646464878503, leftDegrees: 47.52769258067174 };
+
 		if(self.leftEyeTranslation.x !== undefined){
 			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
 			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
@@ -58,6 +59,8 @@ THREE.VREffect = function ( renderer, done ) {
 		} else {
 			navigator.mozGetVRDevices( gotVRDevices );
 		}
+
+
 
 		function gotVRDisplay( devices ) {
 			var vrHMD;
@@ -142,7 +145,7 @@ THREE.VREffect = function ( renderer, done ) {
 			return;
 		}
 
-		if ( true ) { //change this to true to debug stereo render
+		if ( false ) { //change this to true to debug stereo render
 			this.renderStereo.apply( this, [scene, camera] );
 			return;
 		}
