@@ -34,17 +34,10 @@ THREE.VREffect = function ( renderer, done ) {
 		self.phoneVR = new PhoneVR();
 		self.leftEyeTranslation = { x: -0.03200000151991844, y: -0, z: -0, w: 0 };
 		self.rightEyeTranslation = { x: 0.03200000151991844, y: -0, z: -0, w: 0 };
+		leftCurrentBoost = translateByVector(self.leftEyeTranslation); //Essentially default values
+		rightCurrentBoost = translateByVector(self.rightEyeTranslation);
 		self.leftEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 47.52769258067174, downDegrees: 53.04646464878503, leftDegrees: 46.63209579904155 };
 		self.rightEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 46.63209579904155, downDegrees: 53.04646464878503, leftDegrees: 47.52769258067174 };
-
-		if(self.leftEyeTranslation.x !== undefined){
-			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
-			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
-		}
-		else{
-			leftCurrentBoost = translateByVector(self.leftEyeTranslation[0]);
-			rightCurrentBoost = translateByVector(self.rightEyeTranslation[0]);
-		}
 
 		if (!navigator.getVRDisplays && !navigator.mozGetVRDevices && !navigator.getVRDevices) {
 			if ( done ) {
@@ -60,6 +53,13 @@ THREE.VREffect = function ( renderer, done ) {
 			navigator.mozGetVRDevices( gotVRDevices );
 		}
 
+		if(self.leftEyeTranslation.x == undefined){
+			//we need these to be objects instead of arrays in order to process the information correctly
+			self.leftEyeTranslation = {x: self.leftEyeTranslation[0], y:self.leftEyeTranslation[1], z:self.leftEyeTranslation[2], w:0 };
+			self.rightEyeTranslation = {x: self.rightEyeTranslation[0], y:self.rightEyeTranslation[1], z:self.rightEyeTranslation[2], w:0}
+			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
+			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
+		}
 
 
 		function gotVRDisplay( devices ) {
