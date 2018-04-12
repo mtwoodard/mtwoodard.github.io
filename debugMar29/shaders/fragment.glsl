@@ -1,28 +1,7 @@
 vec4 getRay(float fov, vec2 resolution, vec2 fragCoord){
-  if(isStereo != 0){
-    resolution.x = resolution.x/2.0;
-  }
-  if(isStereo == 1){
-    fragCoord.x = fragCoord.x - resolution.x;
-  }
   vec2 xy = 0.2*((fragCoord - 0.5*resolution)/resolution.x);
   float z = 0.1;
-  vec3 pPre;
-  vec3 pPrePre;
-  //pPrePre = qtransform(leftEyeRotation, vec3(-xy,z));
-  //pPre = qtransform(cameraQuat, pPrePre);
-  if(isStereo != 0){
-    if(isStereo == -1){
-       pPrePre = qtransform(leftEyeRotation, vec3(-xy,z));
-    }
-    else{
-       pPrePre = qtransform(rightEyeRotation, vec3(-xy,z));
-    }
-     pPre = qtransform(cameraQuat, pPrePre);
-  }
-  else{
-     pPre = qtransform(cameraQuat, vec3(-xy,z));
-  }
+  vec3 pPre = qtransform(cameraQuat, vec3(-xy,z));
   vec4 p = lorentzNormalize(vec4(pPre, 1.0));
   return p;
 }
@@ -62,8 +41,8 @@ float raymarchDistance(vec4 rO, vec4 rD, float start, float end, out vec4 localE
       float dist = min(localDist, globalDist);
       // float dist = localDist;
       if(dist < EPSILON){
-        if (localDist < globalDist){hitWhich = 2;}
-        else{hitWhich = 1;}
+        if (localDist < globalDist){hitWhich = 1;}
+        else{hitWhich = 2;}
         localEndPoint = localSamplePoint;
         globalEndPoint = globalSamplePoint;
         localEndTangentVector = tangentVectorOnGeodesic(localrO, localrD, localDepth);
@@ -125,21 +104,21 @@ void main(){
     gl_FragColor = vec4(0.5*normalize(pointAtInfinity.xyz)+vec3(0.5,0.5,0.5),1.0);
     return;
   }
-  else if(hitWhich == 1){ // global
-    vec4 surfaceNormal = estimateNormal(globalEndPoint, hitWhich);
-    float cameraLightMatteShade = -lorentzDot(surfaceNormal, globalEndTangentVector);
+  else if(hitWhich == 2){ // global
+    vec4 surfaceNormal = globalEstimateNormal(globalEndPoint);
+    float cameraLightMatteShade = lorentzDot(surfaceNormal, globalEndTangentVector);
     gl_FragColor = vec4(cameraLightMatteShade,0.0,0.0,1.0);
     return;
   }
-  else if(hitWhich == 2){ // local
-    vec4 localSurfaceNormal = estimateNormal(localEndPoint, hitWhich);
+  else if(hitWhich == 1){ // local
+    vec4 localSurfaceNormal = localEstimateNormal(localEndPoint);
     vec4 translatedLightSourcePosition = lightSourcePosition * invCellBoost * totalFixMatrix;
     vec4 directionToLightSource = -directionFrom2Points(localEndPoint, translatedLightSourcePosition);
-    vec4 reflectedLightDirection = 2.0*lorentzDot(directionToLightSource, localSurfaceNormal)*localSurfaceNormal - directionToLightSource;
+    vec4 reflectedLightDirection = -2.0*lorentzDot(directionToLightSource, localSurfaceNormal)*localSurfaceNormal - directionToLightSource;
 
-    float cameraLightMatteShade = max(-lorentzDot(localSurfaceNormal, localEndTangentVector),0.0);
-    float sourceLightMatteShade = max(-lorentzDot(localSurfaceNormal, directionToLightSource),0.0);
-    float reflectedShineShade = max(lorentzDot(reflectedLightDirection, localEndTangentVector),0.0);
+    float cameraLightMatteShade = max(lorentzDot(localSurfaceNormal, localEndTangentVector),0.0);
+    float sourceLightMatteShade = max(lorentzDot(localSurfaceNormal, directionToLightSource),0.0);
+    float reflectedShineShade = max(-lorentzDot(reflectedLightDirection, localEndTangentVector),0.0);
     // float matteShade = sourceLightMatteShade;
     float matteShade = 0.2*cameraLightMatteShade + 0.8*sourceLightMatteShade;
 
@@ -167,15 +146,7 @@ void main(){
     // else{
     //   gl_FragColor = 2.0*(comboShade-0.5)*white + (1.0 - 2.0*(comboShade-0.5))*orange;
     // }
-
-    if (lightingModel == 1)
-    {
-      gl_FragColor = 0.3*depthColor + 0.7*matteColor;
-    }
-    else // lightingModel = 0
-    {
-      gl_FragColor = 0.3*depthColor + 0.5*matteColor + 0.2*reflectedColor;
-    }
+    gl_FragColor = 0.3*depthColor + 0.5*matteColor + 0.2*reflectedColor;
     // gl_FragColor = reflectedColor;
     // gl_FragColor = shineColor;
     // gl_FragColor = 0.2*stepsColor + 0.8*normalColor;

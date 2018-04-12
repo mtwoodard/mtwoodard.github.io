@@ -18,8 +18,6 @@ uniform mat4 invGenerators[6];
 uniform mat4 currentBoost;
 uniform mat4 leftCurrentBoost;
 uniform mat4 rightCurrentBoost;
-uniform vec4 leftEyeRotation;
-uniform vec4 rightEyeRotation;
 uniform mat4 cellBoost;
 uniform mat4 invCellBoost;
 uniform vec4 lightSourcePosition;
@@ -30,7 +28,6 @@ uniform int maxSteps;
 uniform int sceneIndex;
 uniform float halfCubeWidthKlein;
 uniform float sphereRad;
-uniform float tubeRad;
 uniform float horosphereSize;
 uniform float planeOffset;
 
