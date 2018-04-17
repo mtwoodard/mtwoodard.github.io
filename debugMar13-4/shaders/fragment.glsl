@@ -51,12 +51,12 @@ float raymarchDistance(vec4 rO, vec4 rD, out vec4 localEndPoint,
       }
       globalDepth += dist;
       localDepth += dist;
-      if(globalDepth >=MAX_DIST){
+      if(globalDepth >= MAX_DIST){
         hitWhich = 0;
         globalEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
         localEndTangentVector = tangentVectorOnGeodesic(localrO, localrD, localDepth);
         globalEndTangentVector = tangentVectorOnGeodesic(rO, rD, globalDepth);
-        returnMAX_DIST;
+        return MAX_DIST;
       }
     }
   }
@@ -65,7 +65,7 @@ float raymarchDistance(vec4 rO, vec4 rD, out vec4 localEndPoint,
   localEndTangentVector = tangentVectorOnGeodesic(localrO, localrD, localDepth);
   globalEndTangentVector = tangentVectorOnGeodesic(rO, rD, globalDepth);
 
-  returnMAX_DIST;
+  return MAX_DIST;
 }
 
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
