@@ -17,6 +17,8 @@ var invGens;
 var maxSteps = 31;
 var hCWH = 0.6584789485;
 var hCWK = 0.5773502692;
+var sphereRad = 1.0;
+var horosphereSize = 2.6;
 
 var createGenerators = function(){
   var gen0 = translateByVector(new THREE.Vector3( 2.0*hCWH, 0.0, 0.0));
@@ -48,11 +50,6 @@ var fps = {
     return 1/deltaTime;
   }
 }
-
-var lerp = function(a,b,t){
-  return (1-t)*a + t*b;
-}
-
 var fpsLog = new Array(10);
 fpsLog.fill(30.0);
 
@@ -76,9 +73,9 @@ var init = function(){
   //Setup our THREE scene--------------------------------
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
+  document.body.appendChild(renderer.domElement);
   effect = new THREE.VREffect(renderer);
   effect.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
   virtCamera = new THREE.PerspectiveCamera(60,1,0.1,1);
   virtCamera.position.z = 0.1;
@@ -88,16 +85,21 @@ var init = function(){
   invGens = invGenerators(gens);
   currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
+  lightSourcePosition = new THREE.Vector4(0.0,0.0,0.9801960588,1.400280084); // position on hyperboloid of light source, is lorentzNormalize(0,0,.7,1)
   //Setup our material----------------------------------
   loadShaders();
 }
 
-var loadShaders = function(){
+var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
   var loader = new THREE.FileLoader();
   loader.setResponseType('text')
   loader.load('shaders/fragment.glsl',function(main){
-    loader.load('shaders/fragmentInclude.glsl', function(include){
-      finishInit(include.concat(main));
+    loader.load('shaders/hyperbolicScene.glsl', function(scene){
+      loader.load('shaders/hyperbolicMath.glsl', function(math){
+        loader.load('shaders/globalsInclude.glsl', function(globals){
+          finishInit(globals.concat(math).concat(scene).concat(main));
+        });
+      });
     });
   });
 }
@@ -114,14 +116,18 @@ var finishInit = function(fShader){
       invGenerators:{type:"m4v", value:invGens},
       currentBoost:{type:"m4", value:currentBoost},
       cellBoost:{type:"m4", value:cellBoost},
+      lightSourcePosition:{type:"v4", value:lightSourcePosition},
       maxSteps:{type:"i", value:maxSteps},
       sceneIndex:{type:"i", value: 1},
-      halfCubeWidthKlein:{type:"f", value: hCWK}
+      halfCubeWidthKlein:{type:"f", value: hCWK},
+      sphereRad:{type:"f", value:sphereRad},
+      horosphereSize:{type:"f", value:horosphereSize}
     },
     vertexShader: document.getElementById('vertexShader').textContent,
     fragmentShader: fShader,
     transparent:true
   });
+  //Setup dat GUI
   var gui = new dat.GUI();
   gui.add(material.uniforms.sceneIndex, 'value',{Sphere_horosphere: 1, Sphere_plane: 2, Medial_surface: 3, Cube_planes: 4}).name("Scene");
   //Setup a "quad" to render on-------------------------
@@ -148,21 +154,13 @@ var animate = function(){
   controls.update();
   maxSteps = calcMaxSteps(30, fps.getFPS(), maxSteps);
   material.uniforms.maxSteps.value = maxSteps;
-  //console.log(maxSteps);
-  effect.render(scene, camera);
-  requestAnimationFrame(animate);
+  effect.render(scene, camera, animate);
 }
 
 //-------------------------------------------------------
 // Where the magic happens
 //-------------------------------------------------------
 init();
-
-
-//-------------------------------------------------------
-//DAT GUI
-//-------------------------------------------------------
-var sceneIndex = 0;
 
 
 //-------------------------------------------------------
