@@ -96,8 +96,8 @@ var init = function(){
 var loadShaders = function(){
   var loader = new THREE.FileLoader();
   loader.setResponseType('text')
-  loader.load('../shaders/fragment.glsl',function(main){
-    loader.load('../shaders/fragmentInclude.glsl', function(include){
+  loader.load('shaders/fragment.glsl',function(main){
+    loader.load('shaders/fragmentInclude.glsl', function(include){
       finishInit(include.concat(main));
     });
   });
