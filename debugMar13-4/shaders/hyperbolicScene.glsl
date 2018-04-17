@@ -38,7 +38,7 @@ float localSceneHSDF(vec4 samplePoint){
    float final = -unionSDF(plane0, sphere);
    return final;
   }
-  else if(sceneIndex == 3){  // edge medial surfaces
+/*  else if(sceneIndex == 3){  // edge medial surfaces
     samplePoint = abs(samplePoint);
     // //now reflect until smallest xyz coord is z, and largest is x
     if(samplePoint.x < samplePoint.z){
@@ -77,7 +77,7 @@ float localSceneHSDF(vec4 samplePoint){
     float plane2 = geodesicPlaneHSDF(abs(samplePoint), dualPoint2, 0.0);
     float final = unionSDF(unionSDF(plane0,plane1),plane2);
     return final;
-  }
+  }*/
 }
 
 float globalSceneHSDF(vec4 samplePoint){
