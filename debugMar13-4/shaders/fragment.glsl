@@ -6,8 +6,8 @@ vec4 getRay(float fov, vec2 resolution, vec2 fragCoord){
   return p;
 }
 
-float raymarchDistance(vec4 rO, vec4 rD, float start, float end, out vec4 localEndPoint, 
-  out vec4 globalEndPoint, out vec4 localEndTangentVector, out vec4 globalEndTangentVector, 
+float raymarchDistance(vec4 rO, vec4 rD, float start, float end, out vec4 localEndPoint,
+  out vec4 globalEndPoint, out vec4 localEndTangentVector, out vec4 globalEndTangentVector,
   out mat4 totalFixMatrix, out float tilingSteps, out int hitWhich){
   int fakeI = 0;
   float globalDepth = start;
@@ -88,8 +88,8 @@ void main(){
   rayDirV *= currentBoost;
   vec4 rayDirVPrime = directionFrom2Points(rayOrigin, rayDirV);
   //get our raymarched distance back ------------------------
-  float dist = raymarchDistance(rayOrigin, rayDirVPrime, MIN_DIST, MAX_DIST, localEndPoint, 
-    globalEndPoint, localEndTangentVector, globalEndTangentVector, totalFixMatrix, 
+  float dist = raymarchDistance(rayOrigin, rayDirVPrime, MIN_DIST, MAX_DIST, localEndPoint,
+    globalEndPoint, localEndTangentVector, globalEndTangentVector, totalFixMatrix,
     tilingSteps, hitWhich);
   if(hitWhich == 0){ //Didn't hit anything ------------------------
     vec4 pointAtInfinity = pointOnGeodesicAtInfinity(rayOrigin, rayDirVPrime) * cellBoost;  //cellBoost corrects for the fact that we have been moving through cubes
@@ -104,12 +104,12 @@ void main(){
   }
   else if(hitWhich == 1){ // local
     vec4 localSurfaceNormal = localEstimateNormal(localEndPoint);
-    vec4 translatedLightSourcePosition = lightSourcePosition * invCellBoost * totalFixMatrix;
-    vec4 directionToLightSource = -directionFrom2Points(localEndPoint, translatedLightSourcePosition);
+    //vec4 translatedLightSourcePosition = lightSourcePosition * invCellBoost * totalFixMatrix;
+    //vec4 directionToLightSource = -directionFrom2Points(localEndPoint, translatedLightSourcePosition);
 
-    // float shineShade = lorentzDot(localSurfaceNormal, localEndTangentVector);
-    float shineShade = lorentzDot(localSurfaceNormal, directionToLightSource);
-    
+    float shineShade = lorentzDot(localSurfaceNormal, localEndTangentVector);
+    //float shineShade = lorentzDot(localSurfaceNormal, directionToLightSource);
+
     float depthShade = max(1.0-dist/5.0, 0.0);
     float stepsShade = max(1.0-tilingSteps/3.0,0.0);
     // float comboShade = shineShade*depthShade;
