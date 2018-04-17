@@ -104,11 +104,11 @@ void main(){
   }
   else if(hitWhich == 1){ // local
     vec4 localSurfaceNormal = localEstimateNormal(localEndPoint);
-    vec4 translatedLightSourcePosition = lightSourcePosition * invCellBoost * totalFixMatrix;
-    vec4 directionToLightSource = -directionFrom2Points(localEndPoint, translatedLightSourcePosition);
+    //vec4 translatedLightSourcePosition = lightSourcePosition * invCellBoost * totalFixMatrix;
+    //vec4 directionToLightSource = -directionFrom2Points(localEndPoint, translatedLightSourcePosition);
 
-    // float shineShade = lorentzDot(localSurfaceNormal, localEndTangentVector);
-    float shineShade = lorentzDot(localSurfaceNormal, directionToLightSource);
+     float shineShade = lorentzDot(localSurfaceNormal, localEndTangentVector);
+    //float shineShade = lorentzDot(localSurfaceNormal, directionToLightSource);
 
     float depthShade = max(1.0-dist/5.0, 0.0);
     float stepsShade = max(1.0-tilingSteps/3.0,0.0);
