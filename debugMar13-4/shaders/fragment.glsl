@@ -88,7 +88,7 @@ void main(){
   rayDirV *= currentBoost;
   vec4 rayDirVPrime = directionFrom2Points(rayOrigin, rayDirV);
   //get our raymarched distance back ------------------------
-  float dist = raymarchDistance(rayOrigin, rayDirVPrime, MIN_DIST, MAX_DIST, localEndPoint,
+  float dist = raymarchDistance(rayOrigin, rayDirVPrime, localEndPoint,
     globalEndPoint, localEndTangentVector, globalEndTangentVector, totalFixMatrix,
     tilingSteps, hitWhich);
   if(hitWhich == 0){ //Didn't hit anything ------------------------
