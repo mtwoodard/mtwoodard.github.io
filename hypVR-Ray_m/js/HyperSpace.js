@@ -5,7 +5,6 @@ var g_effect;
 var g_fov;
 var g_material;
 var g_controls;
-var g_geometry;
 var g_rotation;
 var g_currentBoost;
 var g_leftCurrentBoost;
@@ -56,7 +55,6 @@ var calcMaxSteps = function(lastFPS, lastMaxSteps)
 	  fpsLog.shift();
 	  fpsLog.push(lastFPS);
 	  var averageFPS = Math.average(fpsLog);
-	  textFPS.innerHTML = averageFPS.toPrecision(3);
 
 	  // We don't want the adjustment to happen too quickly (changing maxSteps every frame is quick!),
 	  // so we'll let fractional amounts m_stepAccumulate until they reach an integer value.
@@ -84,23 +82,22 @@ var gens;
 var invGens;
 var hCDP = [];
 
-var initValues = function(g){
-	g_geometry = g;
+var initValues = function(){
 	var invHCWK = 1.0/hCWK;
-	hCDP[0] = new THREE.Vector4(invHCWK,0.0,0.0,1.0).geometryNormalize(g_geometry);
-	hCDP[1] = new THREE.Vector4(0.0,invHCWK,0.0,1.0).geometryNormalize(g_geometry);
-	hCDP[2] = new THREE.Vector4(0.0,0.0,invHCWK,1.0).geometryNormalize(g_geometry);
-	gens = createGenerators(g_geometry);
+	hCDP[0] = new THREE.Vector4(invHCWK,0.0,0.0,1.0).geometryNormalize();
+	hCDP[1] = new THREE.Vector4(0.0,invHCWK,0.0,1.0).geometryNormalize();
+	hCDP[2] = new THREE.Vector4(0.0,0.0,invHCWK,1.0).geometryNormalize();
+	gens = createGenerators();
   invGens = invGenerators(gens);
 }
 
-var createGenerators = function(g){
-  var gen0 = translateByVector(g, new THREE.Vector3(2.0*hCWH,0.0,0.0));
-  var gen1 = translateByVector(g, new THREE.Vector3(-2.0*hCWH,0.0,0.0));
-  var gen2 = translateByVector(g, new THREE.Vector3(0.0,2.0*hCWH,0.0));
-  var gen3 = translateByVector(g, new THREE.Vector3(0.0,-2.0*hCWH,0.0));
-  var gen4 = translateByVector(g, new THREE.Vector3(0.0,0.0,2.0*hCWH));
-  var gen5 = translateByVector(g, new THREE.Vector3(0.0,0.0,-2.0*hCWH));
+var createGenerators = function(){
+  var gen0 = translateByVector(new THREE.Vector3(2.0*hCWH,0.0,0.0));
+  var gen1 = translateByVector(new THREE.Vector3(-2.0*hCWH,0.0,0.0));
+  var gen2 = translateByVector(new THREE.Vector3(0.0,2.0*hCWH,0.0));
+  var gen3 = translateByVector(new THREE.Vector3(0.0,-2.0*hCWH,0.0));
+  var gen4 = translateByVector(new THREE.Vector3(0.0,0.0,2.0*hCWH));
+  var gen5 = translateByVector(new THREE.Vector3(0.0,0.0,-2.0*hCWH));
   return [gen0, gen1, gen2, gen3, gen4, gen5];
 }
 
@@ -127,11 +124,10 @@ var initLights = function(){
 // Sets up global objects
 //-------------------------------------------------------
 var globalObjectBoosts = [];
-var invGlobalObjectBoosts = [];
 var globalObjectRadii = [];
 
-var initObjects = function(g){
-  SphereObject(g, new THREE.Vector3(-0.5,0,0), 0.2); // geometry, position, radius/radii
+var initObjects = function(){
+  SphereObject(new THREE.Vector3(-0.5,0,0), 0.2); // geometry, position, radius/radii
   for(var i = 1; i<4; i++){ // We need to fill out our arrays with empty objects for glsl to be happy
     EmptyObject();
   }
@@ -143,57 +139,32 @@ var initObjects = function(g){
 var init = function(){
   //Setup our THREE scene--------------------------------
 	time = Date.now();
-	textFPS = document.getElementById('fps');
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
   document.body.appendChild(renderer.domElement);
   g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
   g_effect = new THREE.VREffect(renderer);
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
-  g_fov = 90;
   g_controls = new THREE.Controls();
   g_rotation = new THREE.Quaternion();
   g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
-  g_geometry = Geometry.Hyperbolic; // we start off hyperbolic
-	initValues(g_geometry);
+	initValues();
   initLights();
-  initObjects(g_geometry);
+  initObjects();
 	//We need to load the shaders from file
   //since web is async we need to wait on this to finish
   loadShaders();
 }
 
-var globalsFrag;
-var geometry;
-var mainFrag;
-var scenesFrag = [];
-
 var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
   var loader = new THREE.FileLoader();
   loader.setResponseType('text');
   loader.load('shaders/fragment.glsl',function(main){
-    loader.load('shaders/simplexCuts.glsl', function(scene){
-      loader.load('shaders/hyperbolic.glsl', function(hyperbolic){
-        loader.load('shaders/globalsInclude.glsl', function(globals){
-          //pass full shader string to finish our init
-          geometry = hyperbolic;
-          globalsFrag = globals;
-          scenesFrag.push(scene);
-          mainFrag = main;
-          finishInit(globals.concat(hyperbolic).concat(scene).concat(main));
-        loader.load('shaders/edgeTubes.glsl', function(tubes){
-            loader.load('shaders/medialSurfaces.glsl', function(medial){
-              scenesFrag.push(tubes);
-              scenesFrag.push(medial);
-            });
-          });
-        });
-      });
-    });
+    //pass full shader string to finish our init
+    finishInit(main);
   });
-  
 }
 
 var finishInit = function(fShader){
@@ -201,9 +172,7 @@ var finishInit = function(fShader){
   g_material = new THREE.ShaderMaterial({
     uniforms:{
       isStereo:{type: "i", value: 0},
-      geometry:{type: "i", value: 3},
       screenResolution:{type:"v2", value:g_screenResolution},
-      fov:{type:"f", value:g_fov},
       invGenerators:{type:"m4v", value:invGens},
       currentBoost:{type:"m4", value:g_currentBoost},
       leftCurrentBoost:{type:"m4", value:g_leftCurrentBoost},
@@ -215,22 +184,13 @@ var finishInit = function(fShader){
       lightIntensities:{type:"v3v", value:lightIntensities},
       attnModel:{type:"i", value:attnModel},
       globalObjectBoosts:{type:"m4v", value:globalObjectBoosts},
-      invGlobalObjectBoosts:{type:"m4v", value:invGlobalObjectBoosts},
-      globalObjectRadii:{type:"v3v", value:globalObjectRadii},
-			halfCubeDualPoints:{type:"v4v", value:hCDP},
-      halfCubeWidthKlein:{type:"f", value: hCWK},
-      sphereRad:{type:"f", value:g_sphereRad},
-      tubeRad:{type:"f", value:g_tubeRad},
-      horosphereSize:{type:"f", value:g_horospherSize},
-      planeOffset:{type:"f", value:g_planeOffset}
+      globalObjectRadii:{type:"v3v", value:globalObjectRadii}    
     },
     vertexShader: document.getElementById('vertexShader').textContent,
     fragmentShader: fShader,
     transparent:true
   });
   g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
-  //Setup dat GUI --- SceneManipulator.js
-  initGui();
   //Setup a "quad" to render on-------------------------
   geom = new THREE.BufferGeometry();
   var vertices = new Float32Array([
