@@ -1,7 +1,7 @@
 //--------------------------------------------
 //Global Constants
 //--------------------------------------------
-const int MAX_MARCHING_STEPS = 127;
+const int MAX_MARCHING_STEPS = 63;
 const float MIN_DIST = 0.0;
 const float MAX_DIST = 100.0;
 const float EPSILON = 0.0001;
@@ -135,14 +135,11 @@ float globalSceneSDF(vec4 samplePoint){
       }
     }
   }
-  //Global Objects
-  for(int i=0; i<4; i++){
-    float objDist;
-    objDist = sphereSDF(absoluteSamplePoint, globalObjectBoost[3], globalObjectRadius);
-    if(distance > objDist){
-      hitWhich = 2;
-      distance = objDist;
-    }
+  float objDist;
+  objDist = sphereSDF(absoluteSamplePoint, globalObjectBoost[3], globalObjectRadius);
+  if(distance > objDist){
+    hitWhich = 2;
+    distance = objDist;
   }
   return distance;
 }
@@ -164,7 +161,7 @@ vec3 lightingCalculations(vec4 SP, vec4 TLP, vec4 V, vec3 baseColor, vec4 lightI
   float distToLight = hypDistance(SP, TLP);
   float att = 1.0/(0.01 + lightIntensity.w * distToLight* distToLight);
   //Compute final color
-  return att*(diffuse*baseColor) + specular;
+  return att*((diffuse*baseColor) + specular);
 }
 
 vec3 phongModel(vec4 samplePoint, vec4 tangentVector, mat4 totalFixMatrix){
@@ -206,7 +203,7 @@ vec4 estimateNormal(vec4 p) { // normal vector is in tangent hyperplane to hyper
         basis_y * (localSceneSDF(p + newEp*basis_y) - localSceneSDF(p - newEp*basis_y)) +
         basis_z * (localSceneSDF(p + newEp*basis_z) - localSceneSDF(p - newEp*basis_z)));
     }
-  }
+}
 
 vec4 getRayPoint(vec2 resolution, vec2 fragCoord){ //creates a point that our ray will go through
   if(isStereo != 0) { resolution.x = resolution.x * 0.5; }
@@ -249,16 +246,10 @@ bool isOutsideCell(vec4 samplePoint, out mat4 fixMatrix){
 }
 
 mat4 raymarch(vec4 rO, vec4 rD, out mat4 totalFixMatrix){
-  int fakeI = 0;
   mat4 sampleInfo = mat4(1.0);
   float globalDepth = MIN_DIST; float localDepth = globalDepth;
   vec4 localrO = rO; vec4 localrD = rD;
   for(int i = 0; i< MAX_MARCHING_STEPS; i++){
-    if(fakeI >= maxSteps){
-      //when we break its as if we reached our max marching steps
-      break;
-    }
-    fakeI++;
     mat4 fixMatrix;
     vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
     vec4 globalEndPoint = pointOnGeodesic(rO, rD, globalDepth);
