@@ -112,7 +112,6 @@ var loadShaders = function(){ //Since our shader is made up of strings we can co
 var finishInit = function(fShader){
   g_material = new THREE.ShaderMaterial({
     uniforms:{
-      isStereo:{type: "i", value: 0},
       screenResolution:{type:"v2", value:g_screenResolution},
       invGenerators:{type:"m4v", value:invGens},
       currentBoost:{type:"m4", value:g_currentBoost},

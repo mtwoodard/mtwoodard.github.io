@@ -25,7 +25,6 @@ int hitWhich = 0;
 //-------------------------------------------
 //Translation & Utility Variables
 //--------------------------------------------
-uniform int isStereo;
 uniform vec2 screenResolution;
 uniform mat4 invGenerators[6];
 uniform mat4 currentBoost;
@@ -172,8 +171,6 @@ vec4 estimateNormal(vec4 p) { // normal vector is in tangent hyperplane to hyper
 }
 
 vec4 getRayPoint(vec2 resolution, vec2 fragCoord){ //creates a point that our ray will go through
-  if(isStereo != 0) { resolution.x = resolution.x * 0.5; }
-  if(isStereo == 1) { fragCoord.x = fragCoord.x - resolution.x; }
   vec2 xy = 0.2*((fragCoord - 0.5*resolution)/resolution.x);
   float z = 0.1/tan(radians(fov*0.5));
   vec4 p =  hypNormalize(vec4(xy,-z,1.0));
@@ -247,17 +244,6 @@ mat4 raymarch(vec4 rO, vec4 rD, out mat4 totalFixMatrix){
 void main(){
   vec4 rayOrigin = ORIGIN;
   vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy);
-  //camera position must be translated in hyperboloid ------------------------
-  if(isStereo != 0){ //move left or right for stereo
-    if(isStereo == -1){
-      rayOrigin *= leftCurrentBoost;
-      rayDirV *= leftCurrentBoost;
-    }
-    else{
-      rayOrigin *= rightCurrentBoost;
-      rayDirV *= rightCurrentBoost;
-    }
-  }
   rayOrigin *= currentBoost;
   rayDirV *= currentBoost;
   //generate direction then transform to hyperboloid ------------------------

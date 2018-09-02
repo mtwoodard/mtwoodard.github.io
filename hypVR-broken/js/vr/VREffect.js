@@ -145,12 +145,6 @@ THREE.VREffect = function ( renderer, done ) {
 			return;
 		}
 
-		if ( false ) { //change this to true to debug stereo render
-			fixLeaveStereo = true;
-			this.renderStereo.apply( this, [scene, camera] );
-			return;
-		}
-
 		if(fixLeaveStereo && !guiInfo.toggleStereo){
 			fixLeaveStereo = false;
 			var size = renderer.getSize();
@@ -158,9 +152,6 @@ THREE.VREffect = function ( renderer, done ) {
 			renderer.clear();
 			renderer.setViewport(0,0,size.width, size.height);
 		}
-
-		// Regular render mode if not HMD
-		g_material.uniforms.isStereo.value = 0;
 		renderer.render.apply( this._renderer, [scene, camera]  );
 	};
 
