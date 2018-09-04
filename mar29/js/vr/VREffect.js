@@ -34,8 +34,6 @@ THREE.VREffect = function ( renderer, done ) {
 		self.phoneVR = new PhoneVR();
 		self.leftEyeTranslation = { x: -0.03200000151991844, y: -0, z: -0, w: 0 };
 		self.rightEyeTranslation = { x: 0.03200000151991844, y: -0, z: -0, w: 0 };
-		g_leftCurrentBoost = translateByVector(self.leftEyeTranslation);
-		g_rightCurrentBoost = translateByVector(self.rightEyeTranslation);
 		self.leftEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 47.52769258067174, downDegrees: 53.04646464878503, leftDegrees: 46.63209579904155 };
 		self.rightEyeFOV = { upDegrees: 53.04646464878503, rightDegrees: 46.63209579904155, downDegrees: 53.04646464878503, leftDegrees: 47.52769258067174 };
 
@@ -53,12 +51,13 @@ THREE.VREffect = function ( renderer, done ) {
 			navigator.mozGetVRDevices( gotVRDevices );
 		}
 
-		if(self.leftEyeTranslation.x == undefined){
-			//we need these to be objects instead of arrays in order to process the information correctly
-			self.leftEyeTranslation = {x: self.leftEyeTranslation[0], y:self.leftEyeTranslation[1], z:self.leftEyeTranslation[2], w:0 };
-			self.rightEyeTranslation = {x: self.rightEyeTranslation[0], y:self.rightEyeTranslation[1], z:self.rightEyeTranslation[2], w:0}
-			g_leftCurrentBoost = translateByVector(self.leftEyeTranslation);
-			g_rightCurrentBoost = translateByVector(self.rightEyeTranslation);
+		if(self.leftEyeTranslation.x !== undefined){
+			leftCurrentBoost = translateByVector(self.leftEyeTranslation);
+			rightCurrentBoost = translateByVector(self.rightEyeTranslation);
+		}
+		else{
+			leftCurrentBoost = translateByVector(self.leftEyeTranslation[0]);
+			rightCurrentBoost = translateByVector(self.rightEyeTranslation[0]);
 		}
 
 		function gotVRDisplay( devices ) {
@@ -70,9 +69,8 @@ THREE.VREffect = function ( renderer, done ) {
 					self._vrHMD = vrHMD;
 					var parametersLeft = vrHMD.getEyeParameters( "left" );
 					var parametersRight = vrHMD.getEyeParameters( "right" );
-					self.leftEyeTranslation.x = parametersLeft.offset[0];
-					self.rightEyeTranslation.x = parametersRight.offset[0];
-					guiInfo.toggleStereo = true;
+					self.leftEyeTranslation = parametersLeft.offset;
+					self.rightEyeTranslation = parametersRight.offset;
 					if (parametersLeft.fieldOfView !== undefined) {
 						self.leftEyeFOV = parametersLeft.fieldOfView;
 						self.rightEyeFOV = parametersRight.fieldOfView;
@@ -98,14 +96,14 @@ THREE.VREffect = function ( renderer, done ) {
 					self._vrHMD = vrHMD;
 					var parametersLeft = vrHMD.getEyeParameters( "left" );
 					var parametersRight = vrHMD.getEyeParameters( "right" );
-					self.leftEyeTranslation.x = parametersLeft.offset[0];
-					self.rightEyeTranslation.x = parametersRight.offset[0];
-					guiInfo.toggleStereo = true;
+					self.leftEyeTranslation = parametersLeft.eyeTranslation;
+					self.rightEyeTranslation = parametersRight.eyeTranslation;
 					self.leftEyeFOV = parametersLeft.recommendedFieldOfView;
 					self.rightEyeFOV = parametersRight.recommendedFieldOfView;
 					break; // We keep the first we encounter
 				}
 			}
+
 			if ( done ) {
 				if ( !vrHMD ) {
 				 error = 'HMD not available';
@@ -118,7 +116,6 @@ THREE.VREffect = function ( renderer, done ) {
 	this._init();
 
 	var iconHidden = true;
-	var fixLeaveStereo = false;
 
 	this.render = function ( scene, camera, animate ) {
 		var renderer = this._renderer;
@@ -129,6 +126,7 @@ THREE.VREffect = function ( renderer, done ) {
 			vrHMD.requestAnimationFrame(animate);
 			this.renderStereo.apply( this, [scene, camera] );
 			if (vrHMD.submitFrame !== undefined && this._vrMode) {
+				// vrHMD.getAnimationFrame(frameData);
 				vrHMD.submitFrame();
 			}
 			return;
@@ -145,17 +143,19 @@ THREE.VREffect = function ( renderer, done ) {
 			return;
 		}
 
-		if(fixLeaveStereo && !guiInfo.toggleStereo){
-			fixLeaveStereo = false;
-			var size = renderer.getSize();
-			renderer.setScissorTest(false);
-			renderer.clear();
-			renderer.setViewport(0,0,size.width, size.height);
+		if ( false ) { //change this to true to debug stereo render
+			this.renderStereo.apply( this, [scene, camera] );
+			return;
 		}
+
+		// Regular render mode if not HMD
+		material.uniforms.isStereo.value = 0;
 		renderer.render.apply( this._renderer, [scene, camera]  );
 	};
 
 	this.renderStereo = function( scene, camera, renderTarget, forceClear ) {
+		var leftEyeTranslation = this.leftEyeTranslation;
+		var rightEyeTranslation = this.rightEyeTranslation;
 		var renderer = this._renderer;
 		var size = renderer.getSize();
 		var rendererWidth = size.width;
@@ -170,13 +170,15 @@ THREE.VREffect = function ( renderer, done ) {
 		}
 
 		// render left eye
-		g_material.uniforms.isStereo.value = -1;
+		material.uniforms.isStereo.value = -1;
+		material.uniforms.cameraProjection = this.FovToProjection(this.leftEyeFOV, true, virtCamera.near, virtCamera.far);
 		renderer.setViewport( 0, 0, eyeDivisionLine, rendererHeight );
 		renderer.setScissor( 0, 0, eyeDivisionLine, rendererHeight );
 		renderer.render( scene, camera );
 
 		//render right eye
-		g_material.uniforms.isStereo.value = 1;
+		material.uniforms.isStereo.value = 1;
+		material.uniforms.cameraProjection = this.FovToProjection(this.rightEyeFOV, true, virtCamera.near, virtCamera.far);
 		renderer.setViewport( eyeDivisionLine, 0, eyeDivisionLine, rendererHeight );
 		renderer.setScissor( eyeDivisionLine, 0, eyeDivisionLine, rendererHeight );
 		renderer.render( scene, camera );
@@ -203,7 +205,15 @@ THREE.VREffect = function ( renderer, done ) {
 			vrHMD.exitPresent();
 		}
 	}
-	
+
+	this.getVRMode = function() {
+ 		return this._vrMode;
+ 	}
+
+ 	this.getVRHMD = function() {
+ 		return this._vrHMD;
+ 	}
+
 	this.setFullScreen = function( enable ) {
 		var renderer = this._renderer;
 		var vrHMD = this._vrHMD;
@@ -264,5 +274,70 @@ THREE.VREffect = function ( renderer, done ) {
 		} else {
 			canvas.webkitRequestFullscreen( { vrDisplay: vrHMD } );
 		}
+	};
+
+	this.FovToNDCScaleOffset = function( fov ) {
+		var pxscale = 2.0 / (fov.leftTan + fov.rightTan);
+		var pxoffset = (fov.leftTan - fov.rightTan) * pxscale * 0.5;
+		var pyscale = 2.0 / (fov.upTan + fov.downTan);
+		var pyoffset = (fov.upTan - fov.downTan) * pyscale * 0.5;
+		return { scale: [pxscale, pyscale], offset: [pxoffset, pyoffset] };
+	};
+
+	this.FovPortToProjection = function( fov, rightHanded /* = true */, zNear /* = 0.01 */, zFar /* = 10000.0 */ )
+	{
+		rightHanded = rightHanded === undefined ? true : rightHanded;
+		zNear = zNear === undefined ? 0.01 : zNear;
+		zFar = zFar === undefined ? 10000.0 : zFar;
+
+		var handednessScale = rightHanded ? -1.0 : 1.0;
+
+		// start with an identity matrix
+		var mobj = new THREE.Matrix4();
+		var m = mobj.elements;
+
+		// and with scale/offset info for normalized device coords
+		var scaleAndOffset = this.FovToNDCScaleOffset(fov);
+
+		// X result, map clip edges to [-w,+w]
+		m[0*4+0] = scaleAndOffset.scale[0];
+		m[0*4+1] = 0.0;
+		m[0*4+2] = scaleAndOffset.offset[0] * handednessScale;
+		m[0*4+3] = 0.0;
+
+		// Y result, map clip edges to [-w,+w]
+		// Y offset is negated because this proj matrix transforms from world coords with Y=up,
+		// but the NDC scaling has Y=down (thanks D3D?)
+		m[1*4+0] = 0.0;
+		m[1*4+1] = scaleAndOffset.scale[1];
+		m[1*4+2] = -scaleAndOffset.offset[1] * handednessScale;
+		m[1*4+3] = 0.0;
+
+		// Z result (up to the app)
+		m[2*4+0] = 0.0;
+		m[2*4+1] = 0.0;
+		m[2*4+2] = zFar / (zNear - zFar) * -handednessScale;
+		m[2*4+3] = (zFar * zNear) / (zNear - zFar);
+
+		// W result (= Z in)
+		m[3*4+0] = 0.0;
+		m[3*4+1] = 0.0;
+		m[3*4+2] = handednessScale;
+		m[3*4+3] = 0.0;
+
+		mobj.transpose();
+
+		return mobj;
+	};
+
+	this.FovToProjection = function( fov, rightHanded /* = true */, zNear /* = 0.01 */, zFar /* = 10000.0 */ )
+	{
+		var fovPort = {
+			upTan: Math.tan(fov.upDegrees * Math.PI / 180.0),
+			downTan: Math.tan(fov.downDegrees * Math.PI / 180.0),
+			leftTan: Math.tan(fov.leftDegrees * Math.PI / 180.0),
+			rightTan: Math.tan(fov.rightDegrees * Math.PI / 180.0)
+		};
+		return this.FovPortToProjection(fovPort, rightHanded, zNear, zFar);
 	};
 };
