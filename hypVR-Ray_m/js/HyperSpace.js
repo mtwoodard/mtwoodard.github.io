@@ -97,19 +97,20 @@ var init = function(){
   initObjects();
 	//We need to load the shaders from file
   //since web is async we need to wait on this to finish
-  loadShaders();
+  //loadShaders();
+  finishInit();
 }
 
-var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
+/*var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
   var loader = new THREE.FileLoader();
   loader.setResponseType('text');
   loader.load('shaders/fragment.glsl',function(main){
     //pass full shader string to finish our init
     finishInit(main);
   });
-}
+}*/
 
-var finishInit = function(fShader){
+var finishInit = function(){
   g_material = new THREE.ShaderMaterial({
     uniforms:{
       isStereo:{type: "i", value: 0},
@@ -125,7 +126,7 @@ var finishInit = function(fShader){
       globalObjectBoost:{type:"m4", value:globalObjectBoost}    
     },
     vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: fShader,
+    fragmentShader: document.getElementById('fragmentShader').textContent,
     transparent:true
   });
   g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
