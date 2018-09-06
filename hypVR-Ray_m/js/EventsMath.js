@@ -1,19 +1,3 @@
-//----------------------------------------------------------------------
-//	Math Extensions
-//----------------------------------------------------------------------
-Math.clamp = function(input, min, max){
-	return Math.max(Math.min(input, max), min);
-}
-
-//Takes average of a float array
-Math.average = function(arr){
-	var ave = 0.0;
-	for(var i = 0; i < arr.length; i++) {
-		ave += arr[i];
-	}
-	ave /= arr.length;
-	return ave;
-}
 
 //----------------------------------------------------------------------
 //	Dot Product
@@ -157,7 +141,7 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 
 //--------------------------------------------------------------------
 // Handle window resize
-//--------------------------------------------------------------------
+/*--------------------------------------------------------------------
 var onResize = function(){
 	g_effect.setSize(window.innerWidth, window.innerHeight);
 	if(g_material != null){
@@ -165,7 +149,7 @@ var onResize = function(){
 		g_material.uniforms.screenResolution.value.y = window.innerHeight;
 	}
 }
-window.addEventListener('resize', onResize, false);
+window.addEventListener('resize', onResize, false);*/
 
 //EVENTS**************************************************************
 

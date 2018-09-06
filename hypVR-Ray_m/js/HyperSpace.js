@@ -2,28 +2,17 @@
 // Global Variables
 //-------------------------------------------------------
 var g_effect;
-var g_fov;
 var g_material;
 var g_controls;
-var g_rotation;
 var g_currentBoost;
-var g_leftCurrentBoost;
-var g_rightCurrentBoost;
-var g_cellBoost;
-var g_invCellBoost;
+var g_leftCurrentBoost, g_rightCurrentBoost;
+var g_cellBoost, g_invCellBoost;
 var g_screenResolution;
 
 //-------------------------------------------------------
 // Scene Variables
 //-------------------------------------------------------
-var scene;
-var renderer;
-var camera;
-var mesh;
-var geom;
-var maxSteps = 50;
-var time;
-
+var scene, renderer, camera;
 
 //-------------------------------------------------------
 // Sets up precalculated values
@@ -57,24 +46,15 @@ var invGenerators = function(genArr){
 //-------------------------------------------------------
 var lightPositions = [];
 var lightIntensities = [];
-var attnModel = 1;
+var globalObjectBoost;
 
-var initLights = function(){
+var initObjects = function(){
   PointLightObject(new THREE.Vector3(1.2,0,0), new THREE.Vector4(1,0,0,1));
   PointLightObject(new THREE.Vector3(0,1.2,0), new THREE.Vector4(0,1,0,1));
   PointLightObject(new THREE.Vector3(0,0,1.2), new THREE.Vector4(0,0,1,1));
   PointLightObject(new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
-}
-
-//-------------------------------------------------------
-// Sets up global objects
-//-------------------------------------------------------
-var globalObjectBoost;
-
-var initObjects = function(){
   globalObjectBoost = new THREE.Matrix4().multiply(translateByVector(new THREE.Vector3(-0.5,0,0)));
 }
-
 //-------------------------------------------------------
 // Sets up the scene
 //-------------------------------------------------------
@@ -86,6 +66,7 @@ var init = function(){
   document.body.appendChild(renderer.domElement);
   g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
   g_effect = new THREE.VREffect(renderer);
+  g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
   g_controls = new THREE.Controls();
   g_rotation = new THREE.Quaternion();
@@ -93,7 +74,6 @@ var init = function(){
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
 	initValues();
-  initLights();
   initObjects();
 	//We need to load the shaders from file
   //since web is async we need to wait on this to finish
@@ -129,9 +109,8 @@ var finishInit = function(){
     fragmentShader: document.getElementById('fragmentShader').textContent,
     transparent:true
   });
-  g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
   //Setup a "quad" to render on-------------------------
-  geom = new THREE.BufferGeometry();
+  var geom = new THREE.BufferGeometry();
   var vertices = new Float32Array([
     -1.0, -1.0, 0.0,
      1.0, -1.0, 0.0,
@@ -142,7 +121,7 @@ var finishInit = function(){
     -1.0,  1.0, 0.0
   ]);
   geom.addAttribute('position',new THREE.BufferAttribute(vertices,3));
-  mesh = new THREE.Mesh(geom, g_material);
+  var mesh = new THREE.Mesh(geom, g_material);
   scene.add(mesh);
   
   animate();
