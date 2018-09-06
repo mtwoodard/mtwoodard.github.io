@@ -163,7 +163,7 @@
     vec4 absoluteSamplePoint = samplePoint * cellBoost; // correct for the fact that we have been moving
     float distance = MAX_DIST;
     //Light Objects
-    for(int i=0; i<1; i++){
+    for(int i=0; i<4; i++){
       float objDist;
       if(lightIntensities[i].w == 0.0) { objDist = MAX_DIST; }
       else{
@@ -212,7 +212,7 @@
       //--------------------------------------------
       vec4 translatedLightPosition;
       //Standard Light Objects
-      for(int i = 0; i<1; i++){ //4 is the number of lights we can use
+      for(int i = 0; i<4; i++){ //4 is the number of lights we can use
         if(lightIntensities[i].w != 0.0){
           translatedLightPosition = lightPositions[i]*invCellBoost*totalFixMatrix;
           color += lightingCalculations(samplePoint, translatedLightPosition, V, vec3(1.0), lightIntensities[i]);
