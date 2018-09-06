@@ -69,15 +69,11 @@ var init = function(){
   g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
   g_controls = new THREE.Controls();
-  g_rotation = new THREE.Quaternion();
   g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
 	initValues();
   initObjects();
-	//We need to load the shaders from file
-  //since web is async we need to wait on this to finish
-  //loadShaders();
   finishInit();
 }
 
