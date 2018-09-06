@@ -1,21 +1,4 @@
 //----------------------------------------------------------------------
-//	Math Extensions
-//----------------------------------------------------------------------
-Math.clamp = function(input, min, max){
-	return Math.max(Math.min(input, max), min);
-}
-
-//Takes average of a float array
-Math.average = function(arr){
-	var ave = 0.0;
-	for(var i = 0; i < arr.length; i++) {
-		ave += arr[i];
-	}
-	ave /= arr.length;
-	return ave;
-}
-
-//----------------------------------------------------------------------
 //	Dot Product
 //----------------------------------------------------------------------
 THREE.Vector4.prototype.lorentzDot = function(v){
@@ -168,22 +151,6 @@ var onResize = function(){
 window.addEventListener('resize', onResize, false);
 
 //EVENTS**************************************************************
-
-//--------------------------------------------------------------------
-// Listens for double click to enter fullscreen VR mode
-//--------------------------------------------------------------------
-/*document.body.addEventListener('click', function(event){
-if(event.target.id === "vr-icon"){
-	event.target.style.display = "none";
-	g_effect.phoneVR.setVRMode(!renderer.phoneVR.isVRMode);
-}
-if(g_effect.phoneVR.orientationIsAvailable()){
-	g_effect.setFullScreen(true);
-	if(typeof window.screen.orientation !== 'undefined' && typeof window.screen.orientation.lock === 'function')
-		window.screen.orientation.lock('landscape-primary');
-}
-});*/
-
 //--------------------------------------------------------------------
 // Listen for keys for movement/rotation
 //--------------------------------------------------------------------

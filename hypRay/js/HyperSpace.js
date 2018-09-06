@@ -1,26 +1,16 @@
 //-------------------------------------------------------
 // Global Variables
 //-------------------------------------------------------
-var g_fov;
 var g_material;
 var g_controls;
-var g_rotation;
 var g_currentBoost;
 var g_cellBoost;
 var g_invCellBoost;
-var g_screenResolution;
 
 //-------------------------------------------------------
 // Scene Variables
 //-------------------------------------------------------
-var scene;
-var renderer;
-var camera;
-var mesh;
-var geom;
-var maxSteps = 50;
-var time;
-
+var scene, renderer, camera;
 
 //-------------------------------------------------------
 // Sets up precalculated values
@@ -28,11 +18,6 @@ var time;
 var hCWH = 0.6584789485;
 var gens;
 var invGens;
-
-var initValues = function(){
-	gens = createGenerators();
-  invGens = invGenerators(gens);
-}
 
 var createGenerators = function(){
   var gen0 = translateByVector(new THREE.Vector3(2.0*hCWH,0.0,0.0));
@@ -50,50 +35,42 @@ var invGenerators = function(genArr){
 
 
 //-------------------------------------------------------
-// Sets up the lights
+// Sets up the global objects
 //-------------------------------------------------------
 var lightPositions = [];
 var lightIntensities = [];
-var attnModel = 1;
+var globalObjectBoost;
 
-var initLights = function(){
+var initObjects = function(){
   PointLightObject(new THREE.Vector3(1.2,0,0), new THREE.Vector4(1,0,0,1));
   PointLightObject(new THREE.Vector3(0,1.2,0), new THREE.Vector4(0,1,0,1));
   PointLightObject(new THREE.Vector3(0,0,1.2), new THREE.Vector4(0,0,1,1));
   PointLightObject(new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
-}
-
-//-------------------------------------------------------
-// Sets up global objects
-//-------------------------------------------------------
-var globalObjectBoost;
-
-var initObjects = function(){
   globalObjectBoost = new THREE.Matrix4().multiply(translateByVector(new THREE.Vector3(-0.5,0,0)));
 }
+
 
 //-------------------------------------------------------
 // Sets up the scene
 //-------------------------------------------------------
 var init = function(){
   //Setup our THREE scene--------------------------------
-	time = Date.now();
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  var screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  renderer.setSize(screenResolution.x, screenResolution.y);
   document.body.appendChild(renderer.domElement);
   g_controls = new THREE.Controls();
-  g_rotation = new THREE.Quaternion();
   g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
-	initValues();
-  initLights();
+  gens = createGenerators();
+  invGens = invGenerators(gens);
   initObjects();
   g_material = new THREE.ShaderMaterial({
     uniforms:{
-      screenResolution:{type:"v2", value:g_screenResolution},
+      screenResolution:{type:"v2", value:screenResolution},
       invGenerators:{type:"m4v", value:invGens},
       currentBoost:{type:"m4", value:g_currentBoost},
       cellBoost:{type:"m4", value:g_cellBoost},
@@ -107,7 +84,7 @@ var init = function(){
     transparent:true
   });
   //Setup a "quad" to render on-------------------------
-  geom = new THREE.BufferGeometry();
+  var geom = new THREE.BufferGeometry();
   var vertices = new Float32Array([
     -1.0, -1.0, 0.0,
      1.0, -1.0, 0.0,
@@ -118,8 +95,9 @@ var init = function(){
     -1.0,  1.0, 0.0
   ]);
   geom.addAttribute('position',new THREE.BufferAttribute(vertices,3));
-  mesh = new THREE.Mesh(geom, g_material);
+  var mesh = new THREE.Mesh(geom, g_material);
   scene.add(mesh);
+  //Let's get rendering
   animate();
 }
 
