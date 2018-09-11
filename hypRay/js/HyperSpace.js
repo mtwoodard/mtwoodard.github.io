@@ -11,7 +11,7 @@ var g_invCellBoost;
 // Scene Variables
 //-------------------------------------------------------
 var scene, renderer, camera;
-
+var stats;
 //-------------------------------------------------------
 // Sets up precalculated values
 //-------------------------------------------------------
@@ -61,6 +61,11 @@ var init = function(){
   var screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
   renderer.setSize(screenResolution.x, screenResolution.y);
   document.body.appendChild(renderer.domElement);
+  stats = new Stats();
+  stats.showPanel(1);
+  stats.showPanel(2);
+  stats.showPanel(0);
+  document.body.appendChild(stats.dom);
   g_controls = new THREE.Controls();
   g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
@@ -105,9 +110,11 @@ var init = function(){
 // Where our scene actually renders out to screen
 //-------------------------------------------------------
 var animate = function(){
+  stats.begin();
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
   g_controls.update();
+  stats.end();
 }
 
 //-------------------------------------------------------
