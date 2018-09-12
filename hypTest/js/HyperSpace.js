@@ -10,7 +10,7 @@ var g_invCellBoost;
 //-------------------------------------------------------
 // Scene Variables
 //-------------------------------------------------------
-var scene, renderer, camera;
+var scene, camera, renderer, composer;
 var stats;
 //-------------------------------------------------------
 // Sets up precalculated values
@@ -58,24 +58,19 @@ var init = function(){
   scene = new THREE.Scene();
   renderer = new THREE.WebGLRenderer();
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
-  var screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-  renderer.setSize(screenResolution.x, screenResolution.y);
+
+  var screenRes = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  renderer.setSize(screenRes.x, screenRes.y);
   document.body.appendChild(renderer.domElement);
-  stats = new Stats();
-  stats.showPanel(1);
-  stats.showPanel(2);
-  stats.showPanel(0);
-  document.body.appendChild(stats.dom);
-  g_controls = new THREE.Controls();
-  g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
-  g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
-  g_invCellBoost = new THREE.Matrix4();
-  gens = createGenerators();
-  invGens = invGenerators(gens);
-  initObjects();
+
+  //Initialize varirables, objects, and stats
+  stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
+  g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
+  gens = createGenerators(); invGens = invGenerators(gens); initObjects();
+
   g_material = new THREE.ShaderMaterial({
     uniforms:{
-      screenResolution:{type:"v2", value:screenResolution},
+      screenResolution:{type:"v2", value:screenRes},
       invGenerators:{type:"m4v", value:invGens},
       currentBoost:{type:"m4", value:g_currentBoost},
       cellBoost:{type:"m4", value:g_cellBoost},
@@ -86,26 +81,20 @@ var init = function(){
     },
     vertexShader: document.getElementById('vertexShader').textContent,
     fragmentShader: document.getElementById('fragmentShader').textContent,
-    side:THREE.FrontSide,
     transparent:true
   });
-  /*Setup a "quad" to render on-------------------------
-  var geom = new THREE.BufferGeometry();
-  var vertices = new Float32Array([
-    -1.0, -1.0, 0.0,
-     1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
-
-    -1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
-    -1.0,  1.0, 0.0
-  ]);
-  geom.addAttribute('position',new THREE.BufferAttribute(vertices,3));
-  var mesh = new THREE.Mesh(geom, g_material);
-  scene.add(mesh);*/
   var geom = new THREE.PlaneBufferGeometry(2,2);
   var mesh = new THREE.Mesh(geom, g_material);
   scene.add(mesh);
+  //Composer
+  composer = new THREE.EffectComposer(renderer);
+  //Render Passes
+  var renderPass = new THREE.RenderPass(scene, camera);
+  composer.addPass(renderPass);
+  //Shader Passes
+  var pass1 = new THREE.ShaderPass(THREE.FocusShader);
+  composer.addPass(pass1);
+  pass1.renderToScreen = true;
   //Let's get rendering
   animate();
 }
@@ -116,7 +105,7 @@ var init = function(){
 var animate = function(){
   stats.begin();
   requestAnimationFrame(animate);
-  renderer.render(scene, camera);
+  composer.render();
   g_controls.update();
   stats.end();
 }
