@@ -86,8 +86,8 @@ var init = function(){
   //Composer
   composer = new THREE.EffectComposer(renderer);
   //Render Passes
-  var renderPass = new THREE.RenderPass(scene, camera);
-  composer.addPass(renderPass);
+  //var renderPass = new THREE.RenderPass(scene, camera);
+  //composer.addPass(renderPass);
   //Shader Passes
   var pass1 = initShader(screenRes);
   composer.addPass(pass1);
