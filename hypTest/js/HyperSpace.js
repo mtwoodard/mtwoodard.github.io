@@ -49,6 +49,22 @@ var initObjects = function(){
   globalObjectBoost = new THREE.Matrix4().multiply(translateByVector(new THREE.Vector3(-0.5,0,0)));
 }
 
+//-------------------------------------------------------
+// Set up shader
+//-------------------------------------------------------
+
+var initShader = function(screenRes){
+  var pass = new THREE.ShaderPass(THREE.RaymarchShader);
+  pass.uniforms.screenResolution.value = screenRes;
+  pass.uniforms.invGenerators.value = invGens;
+  pass.uniforms.currentBoost.value = g_currentBoost;
+  pass.uniforms.cellBoost.value = g_cellBoost;
+  pass.uniforms.invCellBoost.value = g_invCellBoost;
+  pass.uniforms.lightPositions.value = lightPositions;
+  pass.uniforms.lightIntensities.value = lightIntensities;
+  pass.uniforms.globalObjectBoost.value = globalObjectBoost;
+  return pass;
+}
 
 //-------------------------------------------------------
 // Sets up the scene
@@ -67,32 +83,13 @@ var init = function(){
   stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
   g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
   gens = createGenerators(); invGens = invGenerators(gens); initObjects();
-
-  g_material = new THREE.ShaderMaterial({
-    uniforms:{
-      screenResolution:{type:"v2", value:screenRes},
-      invGenerators:{type:"m4v", value:invGens},
-      currentBoost:{type:"m4", value:g_currentBoost},
-      cellBoost:{type:"m4", value:g_cellBoost},
-      invCellBoost:{type:"m4", value:g_invCellBoost},
-			lightPositions:{type:"v4v", value:lightPositions},
-      lightIntensities:{type:"v3v", value:lightIntensities},
-      globalObjectBoost:{type:"m4", value:globalObjectBoost}    
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: document.getElementById('fragmentShader').textContent,
-    transparent:true
-  });
-  var geom = new THREE.PlaneBufferGeometry(2,2);
-  var mesh = new THREE.Mesh(geom, g_material);
-  scene.add(mesh);
   //Composer
   composer = new THREE.EffectComposer(renderer);
   //Render Passes
   var renderPass = new THREE.RenderPass(scene, camera);
   composer.addPass(renderPass);
   //Shader Passes
-  var pass1 = new THREE.ShaderPass(THREE.FocusShader);
+  var pass1 = initShader(screenRes);
   composer.addPass(pass1);
   pass1.renderToScreen = true;
   //Let's get rendering
