@@ -53,7 +53,7 @@ var initObjects = function(){
 // Set up shader
 //-------------------------------------------------------
 
-var initShader = function(screenRes){
+var raymarchPass = function(screenRes){
   var pass = new THREE.ShaderPass(THREE.RaymarchShader);
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
@@ -83,16 +83,34 @@ var init = function(){
   stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
   g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
   gens = createGenerators(); invGens = invGenerators(gens); initObjects();
-  //Composer
+
+  //-------------------------------------------------------
+  // "Post" Processing - Since we are not using meshes we actually 
+  //                     don't need to do traditional rendering we 
+  //                     can just use post processed effects
+  //-------------------------------------------------------
+
+  //Composer **********************************************
   composer = new THREE.EffectComposer(renderer);
-  //Render Passes
-  //var renderPass = new THREE.RenderPass(scene, camera);
-  //composer.addPass(renderPass);
-  //Shader Passes
-  var pass1 = initShader(screenRes);
-  composer.addPass(pass1);
-  pass1.renderToScreen = true;
+
+  //Shader Passes *****************************************
+  //Raymarch
+  var raymarch = raymarchPass(screenRes);
+  composer.addPass(raymarch);
+  //Antialiasing
+  var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
+  composer.addPass(FXAA);
+  //Focus
+  var focus = new THREE.ShaderPass(THREE.FocusShader);
+  composer.addPass(focus);
+  //Vignette 
+  var vignette = new THREE.ShaderPass(THREE.VignetteShader);
+  composer.addPass(vignette);
+  //Finish Up
+  vignette.renderToScreen = true;
+  //------------------------------------------------------
   //Let's get rendering
+  //------------------------------------------------------
   animate();
 }
 
