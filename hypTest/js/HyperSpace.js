@@ -97,7 +97,7 @@ var init = function(){
   //Raymarch
   var raymarch = raymarchPass(screenRes);
   composer.addPass(raymarch);
-  //Antialiasing
+  /*Antialiasing
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
   composer.addPass(FXAA);
   //Focus
@@ -105,9 +105,9 @@ var init = function(){
   composer.addPass(focus);
   //Vignette 
   var vignette = new THREE.ShaderPass(THREE.VignetteShader);
-  composer.addPass(vignette);
+  composer.addPass(vignette);*/
   //Finish Up
-  vignette.renderToScreen = true;
+  raymarch.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------
