@@ -1,10 +1,12 @@
 from sys import argv
 import string 
 
-script, filename, outputName = argv
+script = argv[0]
+filename = argv[1]
+outputName = argv[2]
 
 def compareStrings(s1, s2):
-    return s1.translate(None, string.whitespace) == s2.translate(None, string.whitespace)
+    return s1.translate(dict.fromkeys(map(ord, string.whitespace))) == s2.translate(dict.fromkeys(map(ord,string.whitespace)))
 
 def getName(line):
     reversedName = ''
@@ -17,7 +19,7 @@ def getName(line):
         elif c == '[':
             isArray = False
         elif c == ' ':
-            break;
+            break
         elif not(isArray):
             reversedName += c
     return reversed(reversedName)
@@ -46,8 +48,8 @@ def parseUniformInfo(line):
     elif line.find('int') >= 0:
         typed = 'i'
         value = '0'
-    else line.find('sampler2D') >= 0:
-        typed = ''
+    elif line.find('sampler2D') >= 0:
+        typed = 't'
         value = 'null'
 
     if line.find('[') >= 0:
@@ -70,7 +72,9 @@ fragment = []
 #Parse through file
 with open(filename) as file:
     for line in file:
-        if compareStrings(line, 'BEGIN VERTEX'):
+        if line.isspace():
+            continue
+        elif compareStrings(line, 'BEGIN VERTEX'):
             isVertex = True
         elif compareStrings(line, 'END VERTEX'): 
             isVertex = False
@@ -78,18 +82,29 @@ with open(filename) as file:
             isFragment = True
         elif compareStrings(line, 'END FRAGMENT'):
             isFragment = False
-        if isVertex:
+        elif isVertex:
             if line.find('uniform') >= 0: #check if line is uniform declaration
                 uniforms.append(parseUniformInfo(line))
             vertex.append(line)
-        if isFragment:
+        elif isFragment:
             if line.find('uniform') >= 0: #check if line is uniform declaration
                 uniforms.append(parseUniformInfo(line))
             fragment.append(line)
 
-def writeUniforms(file)
+#Quotes text in a string - keeps code cleaner        
+def quoteString(text):
+    return '"' + text + '"'
 
-def writeShader(file, shader)
+#
+def writeUniforms(file):
+    q = '"'
+    for i in range(len(uniforms)):
+        file.write(quoteString(uniforms[i][0]) + ':     {type:'+quoteString(uniforms[i][1])+', value:'+uniforms[i][2]+'},')
+
+def writeShader(file, shader):
+    for line in shader:
+        file.write(quoteString(line)+',')
+
 
 #Begin writing to new JS file
 output = open(outputName+'.js', 'w')
