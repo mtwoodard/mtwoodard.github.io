@@ -54,7 +54,7 @@ var initObjects = function(){
 //-------------------------------------------------------
 
 var raymarchPass = function(screenRes){
-  var pass = new THREE.ShaderPass(THREE.RaymarchShader);
+  var pass = new THREE.ShaderPass(THREE.ray);
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
   pass.uniforms.currentBoost.value = g_currentBoost;
