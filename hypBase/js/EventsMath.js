@@ -144,8 +144,8 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 var onResize = function(){
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	if(g_material != null){
-		g_material.uniforms.screenResolution.value.x = window.innerWidth;
-		g_material.uniforms.screenResolution.value.y = window.innerHeight;
+		THREE.ray.screenResolution.value.x = window.innerWidth;
+		THREE.ray.screenResolution.value.y = window.innerHeight;
 	}
 }
 window.addEventListener('resize', onResize, false);
@@ -177,3 +177,22 @@ function tap(event, sign){
 
 document.addEventListener('touchstart', function(event){tap(event, 1);}, false);
 document.addEventListener('touchend', function(event){tap(event, -1);}, false);
+
+//--------------------------------------------------------------------
+// Get phone orientation info
+//--------------------------------------------------------------------
+var oldRotation = new THREE.Quaternion();
+
+function handleOrientation(event){
+	var roll = event.beta + 180; //[-180, 180] + 180
+	var pitch = event.gamma * 2 + 180; //[-90, 90] * 2 + 180
+	var yaw = event.alpha; //[0, 360]
+
+	var rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(roll, pitch, yaw));
+	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
+	var m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
+	g_currentBoost.premultiply(m);
+	oldRotation = rotation;
+}
+
+window.addEventListener('deviceorientation', handleOrientation);
