@@ -67,6 +67,16 @@ function constructHyperboloidPoint(direction, distance){
 }
 
 //----------------------------------------------------------------------
+//	Quaternion - Generators
+//----------------------------------------------------------------------
+
+function getQuatFromEulerAngles(angles){
+	angles.multiplyScalar(Math.PI/180);
+	var euler = new THREE.Euler(angles.x, angles.y, angles.z);
+	return new THREE.Quaternion().setFromEuler(euler);
+}
+
+//----------------------------------------------------------------------
 //	Matrix - Generators
 //----------------------------------------------------------------------
 function translateByVector(v) { // trickery stolen from Jeff Weeks' Curved Spaces app
@@ -188,7 +198,7 @@ function handleOrientation(event){
 	var pitch = event.gamma * 2 + 180; //[-90, 90] * 2 + 180
 	var yaw = event.alpha; //[0, 360]
 
-	var rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(roll, pitch, yaw));
+	var rotation = getQuatFromEulerAngles(new THREE.Vector3(roll, pitch, yaw));
 	if(oldRotation === undefined) oldRotation = rotation;
 	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
 	var m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
