@@ -181,7 +181,7 @@ document.addEventListener('touchend', function(event){tap(event, -1);}, false);
 //--------------------------------------------------------------------
 // Get phone orientation info
 //--------------------------------------------------------------------
-var oldRotation = new THREE.Quaternion();
+var oldRotation = undefined;
 
 function handleOrientation(event){
 	var roll = event.beta + 180; //[-180, 180] + 180
@@ -189,6 +189,7 @@ function handleOrientation(event){
 	var yaw = event.alpha; //[0, 360]
 
 	var rotation = new THREE.Quaternion().setFromEuler(new THREE.Euler(roll, pitch, yaw));
+	if(oldRotation === undefined) oldRotation = rotation;
 	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
 	var m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
 	g_currentBoost.premultiply(m);
