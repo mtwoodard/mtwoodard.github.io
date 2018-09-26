@@ -94,17 +94,33 @@ function getScreenOrientation(){
 }
 
 
-function getQuatFromPhoneAngles(angles){
-    var degToRad = Math.PI/180;
-	angles.multiplyScalar(degToRad);
-	var euler = new THREE.Euler(angles.x, angles.y, angles.z);
-    var deviceQuat = new THREE.Quaternion().setFromEuler(euler);
-    var screenOrientation = (getScreenOrientation() * degToRad)/2;
-    var screenTransform = new THREE.Quaternion(0,0, -Math.sin(getScreenOrientation), Math.cos(screenOrientation));
+function getQuatFromPhoneAngles(angles) {
+    var degtorad = Math.PI / 180; // Degree-to-Radian conversion
+    var z = angles.z * degtorad / 2;
+    var x = angles.x * degtorad / 2;
+    var y = angles.y * degtorad / 2;
+    var cX = Math.cos(x);
+    var cY = Math.cos(y);
+    var cZ = Math.cos(z);
+    var sX = Math.sin(x);
+    var sY = Math.sin(y);
+    var sZ = Math.sin(z);
 
-    var deviceRot = new THREE.Quaternion();
-    deviceRot.multiplyQuaternions(deviceQuat, screenTransform);
-    
+    // ZXY quaternion construction.
+    var w = cX * cY * cZ - sX * sY * sZ;
+    var x = sX * cY * cZ - cX * sY * sZ;
+    var y = cX * sY * cZ + sX * cY * sZ;
+    var z = cX * cY * sZ + sX * sY * cZ;
+
+    var deviceQuaternion = new THREE.Quaternion(x, y, z, w);
+
+    // Correct for the screen orientation.
+    var screenOrientation = (this.getScreenOrientation() * degtorad)/2;
+    var screenTransform = new THREE.Quaternion(0, 0, -Math.sin(screenOrientation), Math.cos(screenOrientation));
+
+    var deviceRotation = new THREE.Quaternion();
+    deviceRotation.multiplyQuaternions(deviceQuaternion, screenTransform);
+
     // deviceRotation is the quaternion encoding of the transformation
     // from camera coordinates to world coordinates.  The problem is that
     // our shader uses conventional OpenGL coordinates
@@ -113,17 +129,15 @@ function getQuatFromPhoneAngles(angles){
     // To fix the mismatch, we need to fix this.  We'll arbitrarily choose
     // North to correspond to -z (the default camera direction).
     var r22 = Math.sqrt(0.5);
-    deviceRot.multiplyQuaternions(new THREE.Quaternion(-r22, 0, 0, r22), deviceRot);
-    return deviceRot;
+    deviceRotation.multiplyQuaternions(new THREE.Quaternion(-r22, 0, 0, r22), deviceRotation);
+
+    return deviceRotation;
 }
 
 
 function handleOrientation(event){
-	var roll = event.beta + 180; //[-180, 180] + 180
-	var pitch = event.gamma * 2 + 180; //[-90, 90] * 2 + 180
-	var yaw = event.alpha; //[0, 360]
-
-    var rotation = getQuatFromPhoneAngles(new THREE.Vector3(roll, pitch, yaw));
+	//roll = event.beta; pitch = event.gamma; yaw = event.alpha;
+    var rotation = getQuatFromPhoneAngles(new THREE.Vector3(event.beta, event.gamma, event.alpha));
     if(oldRotation === undefined) oldRotation = rotation;
     //Actually use the rotations to adjust rotation
 	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
