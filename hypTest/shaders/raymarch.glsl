@@ -33,6 +33,7 @@ BEGIN FRAGMENT
   //-------------------------------------------
   //Translation & Utility Variables
   //--------------------------------------------
+  uniform int isStereo;
   uniform vec2 screenResolution;
   uniform mat4 invGenerators[6];
   uniform mat4 currentBoost;

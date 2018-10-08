@@ -6,6 +6,7 @@ var g_controls;
 var g_currentBoost;
 var g_cellBoost;
 var g_invCellBoost;
+var g_vr = true;
 
 //-------------------------------------------------------
 // Scene Variables
@@ -55,6 +56,7 @@ var initObjects = function(){
 
 var raymarchPass = function(screenRes){
   var pass = new THREE.ShaderPass(THREE.ray);
+  pass.uniforms.isStereo.value = 0;
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
   pass.uniforms.currentBoost.value = g_currentBoost;
@@ -97,17 +99,11 @@ var init = function(){
   //Raymarch
   var raymarch = raymarchPass(screenRes);
   composer.addPass(raymarch);
-  /*Antialiasing
+  //Antialiasing
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
   composer.addPass(FXAA);
-  //Focus
-  var focus = new THREE.ShaderPass(THREE.FocusShader);
-  composer.addPass(focus);
-  //Vignette 
-  var vignette = new THREE.ShaderPass(THREE.VignetteShader);
-  composer.addPass(vignette);*/
   //Finish Up
-  raymarch.renderToScreen = true;
+  FXAA.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------

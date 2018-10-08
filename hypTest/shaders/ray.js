@@ -5,6 +5,7 @@
 THREE.ray = {
 
 uniforms: {
+"isStereo":     {type:"i", value:0},
 "screenResolution":     {type:"v2", value:new THREE.Vector2()},
 "invGenerators":     {type:"m4v", value:[]},
 "currentBoost":     {type:"m4", value:new THREE.Matrix4()},
@@ -53,6 +54,7 @@ fragmentShader: [
 "  //-------------------------------------------",
 "  //Translation & Utility Variables",
 "  //--------------------------------------------",
+"  uniform int isStereo;",
 "  uniform vec2 screenResolution;",
 "  uniform mat4 invGenerators[6];",
 "  uniform mat4 currentBoost;",
