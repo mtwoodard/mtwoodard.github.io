@@ -1,4 +1,9 @@
 //-------------------------------------------------------
+// Constant Variables
+//-------------------------------------------------------
+const c_ipDist = 0.03200000151991844;
+
+//-------------------------------------------------------
 // Global Variables
 //-------------------------------------------------------
 var g_material;
@@ -6,7 +11,8 @@ var g_controls;
 var g_currentBoost;
 var g_cellBoost;
 var g_invCellBoost;
-var g_vr = true;
+var g_vr = 1;
+var g_leftBoost, g_rightBoost;
 
 //-------------------------------------------------------
 // Scene Variables
@@ -21,6 +27,8 @@ var gens;
 var invGens;
 
 var createGenerators = function(){
+  g_leftBoost = translateByVector(new THREE.Vector3(-c_ipDist,0,0));
+  g_rightBoost = translateByVector(new THREE.Vector3(c_ipDist,0,0));
   var gen0 = translateByVector(new THREE.Vector3(2.0*hCWH,0.0,0.0));
   var gen1 = translateByVector(new THREE.Vector3(-2.0*hCWH,0.0,0.0));
   var gen2 = translateByVector(new THREE.Vector3(0.0,2.0*hCWH,0.0));
@@ -56,7 +64,7 @@ var initObjects = function(){
 
 var raymarchPass = function(screenRes){
   var pass = new THREE.ShaderPass(THREE.ray);
-  pass.uniforms.isStereo.value = 0;
+  pass.uniforms.isStereo.value = g_vr;
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
   pass.uniforms.currentBoost.value = g_currentBoost;
@@ -103,7 +111,7 @@ var init = function(){
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
   composer.addPass(FXAA);
   //Finish Up
-  FXAA.renderToScreen = true;
+  raymarch.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------

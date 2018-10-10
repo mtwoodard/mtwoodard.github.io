@@ -82,38 +82,30 @@ THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
 		if(this.renderToScreen){
 			//render left
-			if(this.uniforms.isStereo){
-				this.uniforms.isStereo.value = -1;
-				this.uniforms.stereoBoost.value.copy( g_leftBoost);
-			}
+			this.uniforms.isStereo.value = -1;
+			this.uniforms.stereoBoost.value.copy( g_leftBoost);
 			renderer.setViewport(0, 0, eyeDivisionLine, rendererHeight);
 			renderer.setScissor(0, 0, eyeDivisionLine, rendererHeight);
 			renderer.render(this.scene, this.camera);
 
 			//render right eye
-			if(this.uniforms.isStereo){
-				this.uniforms.isStereo.value = 1;
-				this.uniforms.stereoBoost.value.copy(g_rightBoost);
-			}
+			this.uniforms.isStereo.value = 1;
+			this.uniforms.stereoBoost.value.copy(g_rightBoost);
 			renderer.setViewport(eyeDivisionLine, 0, eyeDivisionLine, rendererHeight);
 			renderer.setScissor(eyeDivisionLine, 0, eyeDivisionLine, rendererHeight);
 			renderer.render(this.scene, this.camera);
 		}
 		else{
 			//render left eye
-			if(this.uniforms.isStereo){
-				this.uniforms.isStereo.value = -1;
-				this.uniforms.stereoBoost.value.copy( g_leftBoost);
-			}
+			this.uniforms.isStereo.value = -1;
+			this.uniforms.stereoBoost.value.copy( g_leftBoost);
 			renderer.setViewport(0, 0, eyeDivisionLine, rendererHeight);
 			renderer.setScissor(0, 0, eyeDivisionLine, rendererHeight);
 			renderer.render(this.scene, this.camera, writeBuffer, this.clear );
 
 			//render right eye
-			if(this.uniforms.isStereo){
-				this.uniforms.isStereo.value = 1;
-				this.uniforms.stereoBoost.value.copy(g_rightBoost);
-			}
+			this.uniforms.isStereo.value = 1;
+			this.uniforms.stereoBoost.value.copy(g_rightBoost);
 			renderer.setViewport(eyeDivisionLine, 0, eyeDivisionLine, rendererHeight);
 			renderer.setScissor(eyeDivisionLine, 0, eyeDivisionLine, rendererHeight);
 			renderer.render(this.scene, this.camera, writeBuffer, this.clear );
