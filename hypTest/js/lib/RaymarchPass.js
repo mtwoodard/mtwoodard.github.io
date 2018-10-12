@@ -1,8 +1,8 @@
 /**
- * @author alteredq / http://alteredqualia.com/
+ * @author Michael Woodard / http://michaelwoodard.net
  */
 
-THREE.ShaderPass = function ( shader, textureID ) {
+THREE.RaymarchPass = function ( shader, textureID ) {
 
 	THREE.Pass.call( this );
 

@@ -6,6 +6,7 @@ var g_controls;
 var g_currentBoost;
 var g_cellBoost;
 var g_invCellBoost;
+var g_phoneOrient;
 
 //-------------------------------------------------------
 // Scene Variables
@@ -79,6 +80,7 @@ var init = function(){
   //Initialize varirables, objects, and stats
   stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
   g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
+  g_phoneOrient = new THREE.Vector3();
   gens = createGenerators(); invGens = invGenerators(gens); initObjects();
 
   //-------------------------------------------------------

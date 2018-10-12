@@ -82,9 +82,9 @@ THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype 
 
 		if(this.renderToScreen){
 			//render left
-			if(this.uniforms.isStereo){
+			if(this.uniforms.isStereo){ //check if we are doing a raymarch pass
 				this.uniforms.isStereo.value = -1;
-				this.uniforms.stereoBoost.value.copy( g_leftBoost);
+				this.uniforms.stereoBoost.value.copy(g_leftBoost);
 			}
 			renderer.setViewport(0, 0, eyeDivisionLine, rendererHeight);
 			renderer.setScissor(0, 0, eyeDivisionLine, rendererHeight);

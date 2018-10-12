@@ -59,6 +59,10 @@ THREE.Controls = function(done){
         //--------------------------------------------------------------------
         // Rotation
         //--------------------------------------------------------------------
+        if(g_phoneOrient.x !== null){
+            handleOrientation();
+        }
+
         var deltaRotation = new THREE.Quaternion(this.manualRotateRate[0] * speed * deltaTime,
                                                     this.manualRotateRate[1] * speed * deltaTime,
                                                     this.manualRotateRate[2] * speed * deltaTime, 1.0);
@@ -134,9 +138,7 @@ function getQuatFromPhoneAngles(angles) {
     return deviceRotation;
 }
 
-
-function handleOrientation(event){
-	//roll = event.beta; pitch = event.gamma; yaw = event.alpha;
+function handleOrientation(){
     var rotation = getQuatFromPhoneAngles(new THREE.Vector3(event.beta, event.gamma, event.alpha));
     if(oldRotation === undefined) oldRotation = rotation;
     //Actually use the rotations to adjust rotation
@@ -146,4 +148,10 @@ function handleOrientation(event){
 	oldRotation = rotation;
 }
 
-window.addEventListener('deviceorientation', handleOrientation);
+function getScreenOrientation(event){
+    g_phoneOrient.x = event.beta;
+    g_phoneOrient.y = event.gamma;
+    g_phoneOrient.z = event.alpha;
+}
+
+window.addEventListener('deviceorientation', getScreenOrientation);
