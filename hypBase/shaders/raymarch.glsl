@@ -248,7 +248,7 @@ BEGIN FRAGMENT
     else{
       vec4 normal = estimateNormal(samplePoint);
       vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);
-      gl_FragColor = vec4(totalFixMatrix[0].xyz, 1.0);
+      gl_FragColor = vec4(invGenerators[0][0].xyz, 1.0);
     }
   }
 END FRAGMENT
