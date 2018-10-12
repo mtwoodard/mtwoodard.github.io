@@ -133,7 +133,7 @@ BEGIN FRAGMENT
     float distToLight = hypDistance(SP, TLP);
     float att = 1.0/(0.01 + lightIntensity.w * distToLight* distToLight);
     //Compute final color
-    return att*((diffuse*vec3(1.0)) + specular);
+    return att*(diffuse + specular);
   }
   
   vec3 phongModel(vec4 samplePoint, vec4 tangentVector, vec4 normal, mat4 totalFixMatrix){
