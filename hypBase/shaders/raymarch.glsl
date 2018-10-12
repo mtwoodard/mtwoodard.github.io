@@ -141,7 +141,7 @@ BEGIN FRAGMENT
     //--------------------------------------------
     //Lighting Calculations
     //--------------------------------------------
-    vec4 translatedLightPosition;
+    vec4 translatedLightPosition = vec4(0.0);
     //Standard Light Objects
     for(int i = 0; i<4; i++){ //4 is the number of lights we can use
       if(lightIntensities[i].w != 0.0){
@@ -248,7 +248,7 @@ BEGIN FRAGMENT
     else{
       vec4 normal = estimateNormal(samplePoint);
       vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);
-      gl_FragColor = vec4(tangent.xyz, 1.0);
+      gl_FragColor = vec4(color, 1.0);
     }
   }
 END FRAGMENT
