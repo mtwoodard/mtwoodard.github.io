@@ -139,7 +139,7 @@ function getQuatFromPhoneAngles(angles) {
 }
 
 function handleOrientation(){
-    var rotation = getQuatFromPhoneAngles(new THREE.Vector3(event.beta, event.gamma, event.alpha));
+    var rotation = getQuatFromPhoneAngles(new THREE.Vector3(g_phoneOrient.x, g_phoneOrient.y, g_phoneOrient.z));
     if(oldRotation === undefined) oldRotation = rotation;
     //Actually use the rotations to adjust rotation
 	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
