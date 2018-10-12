@@ -246,7 +246,7 @@ fragmentShader: [
 "    else{",
 "      vec4 normal = estimateNormal(samplePoint);",
 "      vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);",
-"      gl_FragColor = vec4(normal.xyz, 1.0);",
+"      gl_FragColor = vec4(tangent.xyz, 1.0);",
 "    }",
 "  }",
 
