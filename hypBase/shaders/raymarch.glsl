@@ -124,7 +124,8 @@ BEGIN FRAGMENT
     vec4 R = 2.0*hypDot(L, normal)*normal - L;
     //Calculate Diffuse Component
     float nDotL = max(hypDot(normal, L),0.0);
-    vec3 diffuse = lightIntensity.rgb * nDotL;
+    //vec3 diffuse = lightIntensity.rgb * nDotL;
+    vec3 diffuse = vec3(0.2, 0.3, 0.4);
     //Calculate Specular Component
     float rDotV = max(hypDot(R, V),0.0);
     vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);
@@ -137,7 +138,7 @@ BEGIN FRAGMENT
   
   vec3 phongModel(vec4 samplePoint, vec4 tangentVector, vec4 normal, mat4 totalFixMatrix){
     vec4 V = -tangentVector;
-    vec3 color = vec3(0.3);
+    vec3 color = vec3(0.0);
     //--------------------------------------------
     //Lighting Calculations
     //--------------------------------------------
@@ -147,6 +148,9 @@ BEGIN FRAGMENT
       if(lightIntensities[i].w != 0.0){
         translatedLightPosition = lightPositions[i]*invCellBoost*totalFixMatrix;
         color += lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[i]);
+      }
+      else{
+        color = vec3(1.0,0.0,0.0);
       }
     }
     return color;
