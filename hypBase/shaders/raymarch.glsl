@@ -205,8 +205,9 @@ BEGIN FRAGMENT
   
   bool raymarch(vec4 rO, vec4 rD, out vec4 samplePoint, out vec4 tangent, out mat4 totalFixMatrix){
     float globalDepth = MIN_DIST; float localDepth = globalDepth;
+    totalFixMatrix = mat4(1.0);
     for(int i = 0; i< MAX_MARCHING_STEPS; i++){
-      mat4 fixMatrix;
+      mat4 fixMatrix = mat4(1.0);
       vec4 endPoint = pointOnGeodesic(rO, rD, localDepth);
       if(isOutsideCell(endPoint, fixMatrix)){
         totalFixMatrix *= fixMatrix;
@@ -248,7 +249,7 @@ BEGIN FRAGMENT
     else{
       vec4 normal = estimateNormal(samplePoint);
       vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);
-      gl_FragColor = vec4(invGenerators[0][0].xyz, 1.0);
+      gl_FragColor = vec4(totalFixMatrix[0].xyz, 1.0);
     }
   }
 END FRAGMENT
