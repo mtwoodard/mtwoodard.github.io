@@ -231,7 +231,6 @@ BEGIN FRAGMENT
   }
   
   void main(){
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     //get intial origin and ray direction -------------------------------------
     vec4 rayOrigin = ORIGIN;
     vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy);
@@ -240,14 +239,12 @@ BEGIN FRAGMENT
     rayDirV *= currentBoost;
     //generate direction then transform to hyperboloid ------------------------
      vec4 rayDirVPrime = hypDirection(rayOrigin, rayDirV);
-    gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
     //get our raymarch info ---------------------------------------------------
     mat4 totalFixMatrix = mat4(1.0);
     vec4 samplePoint; vec4 tangent;
     bool hit = raymarch(rayOrigin, rayDirVPrime, samplePoint, tangent, totalFixMatrix);
-    gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
     //if we hit something color it --------------------------------------------
-    if(!hit) gl_FragColor = vec4(0.0);
+    if(!hit) gl_FragColor = vec4(0.05,0.05,0.05, 1.0);
     else{
       vec4 normal = estimateNormal(samplePoint);
       vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);
