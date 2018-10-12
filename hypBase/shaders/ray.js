@@ -149,7 +149,7 @@ fragmentShader: [
 "    //Standard Light Objects",
 "    //for(int i = 0; i<4; i++){ //4 is the number of lights we can use",
 "      if(lightIntensities[0].w != 0.0){",
-"        color = (lightPositions[0] * invCellBoost).xyz;",
+"        color = (lightPositions[0] * totalFixMatrix).xyz;",
 "        //translatedLightPosition = lightPositions[0]*invCellBoost*totalFixMatrix;",
 "        //color = lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[0]);",
 "        //color += lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[i]);",
