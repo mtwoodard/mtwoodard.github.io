@@ -129,7 +129,7 @@ fragmentShader: [
 "    vec4 R = 2.0*hypDot(L, normal)*normal - L;",
 "    //Calculate Diffuse Component",
 "    float nDotL = max(hypDot(normal, L),0.0);",
-"    vec3 diffuse = nDotL * vec3(1.0); //lightIntensity.rgb * nDotL;",
+"    vec3 diffuse =  lightIntensity.rgb;// * nDotL;",
 "    //Calculate Specular Component",
 "    float rDotV = max(hypDot(R, V),0.0);",
 "    vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);",
