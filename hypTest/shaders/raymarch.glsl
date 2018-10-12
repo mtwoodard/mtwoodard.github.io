@@ -255,6 +255,7 @@ BEGIN FRAGMENT
     mat4 sampleInfo = mat4(1.0);
     float globalDepth = MIN_DIST; float localDepth = globalDepth;
     vec4 localrO = rO; vec4 localrD = rD;
+    totalFixMatrix = mat4(1.0);
     for(int i = 0; i< MAX_MARCHING_STEPS; i++){
       mat4 fixMatrix;
       vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
