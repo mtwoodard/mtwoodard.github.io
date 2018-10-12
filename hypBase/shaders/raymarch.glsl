@@ -244,7 +244,7 @@ BEGIN FRAGMENT
     vec4 samplePoint; vec4 tangent;
     bool hit = raymarch(rayOrigin, rayDirVPrime, samplePoint, tangent, totalFixMatrix);
     //if we hit something color it --------------------------------------------
-    if(!hit) gl_FragColor = vec4(0.0);
+    if(!hit) gl_FragColor = vec4(0.5, 0.1, 0.3, 1.0);
     else{
       vec4 normal = estimateNormal(samplePoint);
       vec3 color = phongModel(samplePoint, tangent, normal, totalFixMatrix);
