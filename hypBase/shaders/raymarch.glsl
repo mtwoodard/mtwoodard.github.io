@@ -146,7 +146,7 @@ BEGIN FRAGMENT
     for(int i = 0; i<4; i++){ //4 is the number of lights we can use
       if(lightIntensities[i].w != 0.0){
         translatedLightPosition = lightPositions[i]*invCellBoost*totalFixMatrix;
-        color = translatedLightPosition.xyz;
+        color = lightPositions[0].xyz;
         //color += lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[i]);
       }
     }
