@@ -137,7 +137,7 @@ BEGIN FRAGMENT
   
   vec3 phongModel(vec4 samplePoint, vec4 tangentVector, vec4 normal, mat4 totalFixMatrix){
     vec4 V = -tangentVector;
-    vec3 color = vec3(0.0);
+    vec3 color = vec3(0.3);
     //--------------------------------------------
     //Lighting Calculations
     //--------------------------------------------
