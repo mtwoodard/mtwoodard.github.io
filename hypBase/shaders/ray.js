@@ -206,7 +206,7 @@ fragmentShader: [
 "    float globalDepth = MIN_DIST; float localDepth = globalDepth;",
 "    totalFixMatrix = mat4(1.0);",
 "    for(int i = 0; i< MAX_MARCHING_STEPS; i++){",
-"      mat4 fixMatrix = mat4(1.0);",
+"      mat4 fixMatrix; //= mat4(1.0);",
 "      vec4 endPoint = pointOnGeodesic(rO, rD, localDepth);",
 "      if(isOutsideCell(endPoint, fixMatrix)){",
 "        totalFixMatrix *= fixMatrix;",
