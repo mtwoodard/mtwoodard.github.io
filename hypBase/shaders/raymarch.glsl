@@ -124,7 +124,7 @@ BEGIN FRAGMENT
     vec4 R = 2.0*hypDot(L, normal)*normal - L;
     //Calculate Diffuse Component
     float nDotL = max(hypDot(normal, L),0.0);
-    vec3 diffuse =  TLP.xyz; //lightIntensity.rgb * nDotL;
+    vec3 diffuse = lightIntensity.rgb * nDotL;
     //Calculate Specular Component
     float rDotV = max(hypDot(R, V),0.0);
     vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);
@@ -132,8 +132,7 @@ BEGIN FRAGMENT
     float distToLight = hypDistance(SP, TLP);
     float att = 1.0/(0.01 + lightIntensity.w * distToLight* distToLight);
     //Compute final color
-    return diffuse;
-    //return att*(diffuse + specular);
+    return att*(diffuse + specular);
   }
   
   vec3 phongModel(vec4 samplePoint, vec4 tangentVector, vec4 normal, mat4 totalFixMatrix){
@@ -147,10 +146,8 @@ BEGIN FRAGMENT
     for(int i = 0; i<4; i++){ //4 is the number of lights we can use
       if(lightIntensities[i].w != 0.0){
         translatedLightPosition = lightPositions[i]*invCellBoost*totalFixMatrix;
-        color += lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[i]);
-      }
-      else{
-        color = vec3(1.0,0.0,0.0);
+        color = translatedLightPosition.xyz;
+        //color += lightingCalculations(samplePoint, translatedLightPosition, V, normal, lightIntensities[i]);
       }
     }
     return color;
