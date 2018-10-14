@@ -59,14 +59,20 @@ THREE.Controls = function(done){
         //--------------------------------------------------------------------
         // Rotation
         //--------------------------------------------------------------------
-        if(g_phoneOrient[0] !== null){
-            handleOrientation();
-        }
 
         var deltaRotation = new THREE.Quaternion(this.manualRotateRate[0] * speed * deltaTime,
                                                     this.manualRotateRate[1] * speed * deltaTime,
                                                     this.manualRotateRate[2] * speed * deltaTime, 1.0);
+        //Handle Phone Input
+        if(g_phoneOrient[0] !== null){
+            var rotation = getQuatFromPhoneAngles(new THREE.Vector3(g_phoneOrient[0], g_phoneOrient[1], g_phoneOrient[2]));
+            if(oldRotation === undefined) oldRotation = rotation;        
+            deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
+	        oldRotation = rotation;
+        }
+
         deltaRotation.normalize();
+
         if(deltaRotation !== undefined){
             m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
             g_currentBoost.premultiply(m);
