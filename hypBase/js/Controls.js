@@ -11,6 +11,7 @@ THREE.Controls = function(done){
     this.manualRotateRate = new Float32Array([0.0, 0.0, 0.0]);
     this.manualMoveRate = new Float32Array([0.0, 0.0, 0.0]);
     this.updateTime = 0;
+    this.oldRotation = undefined;
     
     this.manualControls = {
         65 : {index: 1, sign: 1, active: 0},  // a
@@ -63,12 +64,13 @@ THREE.Controls = function(done){
         var deltaRotation = new THREE.Quaternion(this.manualRotateRate[0] * speed * deltaTime,
                                                     this.manualRotateRate[1] * speed * deltaTime,
                                                     this.manualRotateRate[2] * speed * deltaTime, 1.0);
+
         //Handle Phone Input
         if(g_phoneOrient[0] !== null){
-            var rotation = getQuatFromPhoneAngles(new THREE.Vector3(g_phoneOrient[0], g_phoneOrient[1], g_phoneOrient[2]));
-            if(oldRotation === undefined) oldRotation = rotation;        
+            var rotation = getQuatFromPhoneAngles(new THREE.Vector3().fromArray(g_phoneOrient));
+            if(this.oldRotation === undefined) this.oldRotation = rotation;        
             deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
-	        oldRotation = rotation;
+	        this.oldRotation = rotation;
         }
 
         deltaRotation.normalize();
@@ -86,7 +88,6 @@ THREE.Controls = function(done){
 //--------------------------------------------------------------------
 // Get phone orientation info
 //--------------------------------------------------------------------
-var oldRotation = undefined;
 
 function getScreenOrientation(){
     switch (window.screen.orientation || window.screen.mozOrientation) {
@@ -143,21 +144,3 @@ function getQuatFromPhoneAngles(angles) {
 
     return deviceRotation;
 }
-
-function handleOrientation(){
-    var rotation = getQuatFromPhoneAngles(new THREE.Vector3(g_phoneOrient[0], g_phoneOrient[1], g_phoneOrient[2]));
-    if(oldRotation === undefined) oldRotation = rotation;
-    //Actually use the rotations to adjust rotation
-	var deltaRotation = new THREE.Quaternion().multiplyQuaternions(oldRotation.inverse(), rotation);
-	var m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
-	g_currentBoost.premultiply(m);
-	oldRotation = rotation;
-}
-
-function getScreenOrientation(event){
-    g_phoneOrient[0] = event.beta;
-    g_phoneOrient[1] = event.gamma;
-    g_phoneOrient[2] = event.alpha;
-}
-
-window.addEventListener('deviceorientation', getScreenOrientation);

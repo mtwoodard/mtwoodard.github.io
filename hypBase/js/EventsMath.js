@@ -177,3 +177,14 @@ function tap(event, sign){
 
 document.addEventListener('touchstart', function(event){tap(event, 1);}, false);
 document.addEventListener('touchend', function(event){tap(event, -1);}, false);
+
+//--------------------------------------------------------------------
+// Get phone's orientation
+//--------------------------------------------------------------------
+function getScreenOrientation(event){
+    g_phoneOrient[0] = event.beta;
+    g_phoneOrient[1] = event.gamma;
+    g_phoneOrient[2] = event.alpha;
+}
+
+document.addEventListener('deviceorientation', getScreenOrientation);
