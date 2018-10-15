@@ -66,7 +66,7 @@ THREE.Controls = function(done){
                                                     this.manualRotateRate[2] * speed * deltaTime, 1.0);
 
         //Handle Phone Input
-        console.log(g_phoneOrient[0]);
+       // console.log(g_phoneOrient[0]);
         if(g_phoneOrient[0] !== null){
             var rotation = this.getQuatFromPhoneAngles(new THREE.Vector3().fromArray(g_phoneOrient));
             if(this.oldRotation === undefined) this.oldRotation = rotation;        
