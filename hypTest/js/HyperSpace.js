@@ -11,6 +11,8 @@ var g_controls;
 var g_currentBoost;
 var g_cellBoost;
 var g_invCellBoost;
+var g_phoneOrient;
+var g_raymarch;
 var g_vr = 1;
 var g_leftBoost, g_rightBoost;
 
@@ -93,6 +95,7 @@ var init = function(){
   stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
   g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
   gens = createGenerators(); invGens = invGenerators(gens); initObjects();
+  g_phoneOrient = [null, null, null];
 
   //-------------------------------------------------------
   // "Post" Processing - Since we are not using meshes we actually 
@@ -105,13 +108,13 @@ var init = function(){
 
   //Shader Passes *****************************************
   //Raymarch
-  var raymarch = raymarchPass(screenRes);
-  composer.addPass(raymarch);
+  g_raymarch = raymarchPass(screenRes);
+  composer.addPass(g_raymarch);
   //Antialiasing
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
   composer.addPass(FXAA);
   //Finish Up
-  raymarch.renderToScreen = true;
+  g_raymarch.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------

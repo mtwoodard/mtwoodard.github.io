@@ -143,9 +143,9 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 //--------------------------------------------------------------------
 var onResize = function(){
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	if(g_material != null){
-		g_material.uniforms.screenResolution.value.x = window.innerWidth;
-		g_material.uniforms.screenResolution.value.y = window.innerHeight;
+	if(g_raymarch != null){
+		g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+		g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
 	}
 }
 window.addEventListener('resize', onResize, false);
@@ -177,3 +177,14 @@ function tap(event, sign){
 
 document.addEventListener('touchstart', function(event){tap(event, 1);}, false);
 document.addEventListener('touchend', function(event){tap(event, -1);}, false);
+
+//--------------------------------------------------------------------
+// Get phone's orientation
+//--------------------------------------------------------------------
+function getScreenOrientation(event){
+    g_phoneOrient[0] = event.beta;
+    g_phoneOrient[1] = event.gamma;
+    g_phoneOrient[2] = event.alpha;
+}
+
+window.addEventListener('deviceorientation', getScreenOrientation);

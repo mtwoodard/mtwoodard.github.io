@@ -143,9 +143,9 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 //--------------------------------------------------------------------
 var onResize = function(){
 	renderer.setSize(window.innerWidth, window.innerHeight);
-	if(g_material != null){
-		THREE.ray.screenResolution.value.x = window.innerWidth;
-		THREE.ray.screenResolution.value.y = window.innerHeight;
+	if(g_raymarch != null){
+		g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+		g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
 	}
 }
 window.addEventListener('resize', onResize, false);
