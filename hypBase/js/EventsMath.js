@@ -188,4 +188,4 @@ function getScreenOrientation(event){
     g_phoneOrient[2] = event.alpha;
 }
 
-document.addEventListener('deviceorientation', getScreenOrientation);
+window.addEventListener('deviceorientation', getScreenOrientation);
