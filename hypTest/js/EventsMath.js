@@ -142,11 +142,9 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 // Handle window resize
 //--------------------------------------------------------------------
 var onResize = function(){
-	renderer.setSize(window.innerWidth, window.innerHeight);
-	if(g_raymarch != null){
-		g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
-		g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
-	}
+	g_renderer.setSize(window.innerWidth, window.innerHeight);
+	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+	g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
 }
 window.addEventListener('resize', onResize, false);
 
@@ -171,12 +169,39 @@ document.addEventListener('keyup', function(event){key(event, -1);}, false);
 //--------------------------------------------------------------------
 // Phone screen tap for movement
 //--------------------------------------------------------------------
+function resetToMono(){
+	g_vr = 0;
+	//set renderer info
+	g_renderer.setSize(window.innerWidth, window.innerHeight);
+	g_renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+	g_renderer.setScissorTest(false);
+	//set raymarch info
+	g_raymarch.uniforms.isStereo.value = 0;
+	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+	g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
+}
+
 function tap(event, sign){
+	if(event.target.id === "vr-icon"){
+		if(g_vr === 1) resetToMono();
+		else g_vr = 1;
+	}
 	g_controls.manualMoveRate[0] += sign;
 }
 
 document.addEventListener('touchstart', function(event){tap(event, 1);}, false);
 document.addEventListener('touchend', function(event){tap(event, -1);}, false);
+
+//--------------------------------------------------------------------
+// Listen for mouse clicks
+//--------------------------------------------------------------------
+function click(event){
+	if(event.target.id === "vr-icon"){
+		if(g_vr === 1) resetToMono();
+		else g_vr = 1;
+	}
+}
+document.addEventListener('click', click);
 
 //--------------------------------------------------------------------
 // Get phone's orientation

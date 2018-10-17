@@ -38,7 +38,7 @@ THREE.RaymarchPass = function ( shader, textureID ) {
 
 };
 
-THREE.ShaderPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
+THREE.RaymarchPass.prototype = Object.assign( Object.create( THREE.Pass.prototype ), {
 
 	constructor: THREE.ShaderPass,
 
