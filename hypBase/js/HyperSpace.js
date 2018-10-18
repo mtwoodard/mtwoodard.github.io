@@ -99,13 +99,7 @@ var init = function(){
   composer.addPass(g_raymarch);
   /*Antialiasing
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
-  composer.addPass(FXAA);
-  /*Focus
-  var focus = new THREE.ShaderPass(THREE.FocusShader);
-  composer.addPass(focus);
-  //Vignette 
-  var vignette = new THREE.ShaderPass(THREE.VignetteShader);
-  composer.addPass(vignette);*/
+  composer.addPass(FXAA);*/
   //Finish Up
   g_raymarch.renderToScreen = true;
   //------------------------------------------------------
