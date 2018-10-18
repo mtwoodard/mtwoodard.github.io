@@ -9,7 +9,7 @@ BEGIN FRAGMENT
   //--------------------------------------------
   //Global Constants
   //--------------------------------------------
-  const int MAX_MARCHING_STEPS = 32;
+  const int MAX_MARCHING_STEPS = 64;
   const float MIN_DIST = 0.0;
   const float MAX_DIST = 100.0;
   const float EPSILON = 0.0001;
@@ -167,7 +167,7 @@ BEGIN FRAGMENT
     vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);
     //Attenuation - Inverse Square
     float distToLight = hypDistance(SP, TLP);
-    float att = 1.0/(0.01 + lightIntensity.w * distToLight* distToLight);
+    float att = 0.6/(0.01 + lightIntensity.w * distToLight);
     //Compute final color
     return att*((diffuse*baseColor) + specular);
   }
