@@ -14,7 +14,7 @@ var g_cellBoost;
 var g_invCellBoost;
 var g_phoneOrient;
 var g_raymarch;
-var g_vr = 1;
+var g_vr = 0;
 var g_leftBoost, g_rightBoost;
 
 //-------------------------------------------------------
@@ -68,7 +68,7 @@ var initObjects = function(){
 //-------------------------------------------------------
 
 var raymarchPass = function(screenRes){
-  var pass = new THREE.RaymarchPass(THREE.ray);
+  var pass = new THREE.ShaderPass(THREE.ray);
   pass.uniforms.isStereo.value = g_vr;
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
@@ -128,9 +128,9 @@ var init = function(){
 var animate = function(){
   stats.begin();
   requestAnimationFrame(animate);
-  console.time("render");
+ // console.time("render");
   composer.render();
-  console.timeEnd("render");
+  //console.timeEnd("render");
   g_controls.update();
   stats.end();
 }

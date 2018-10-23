@@ -224,13 +224,11 @@ BEGIN FRAGMENT
       }
   }
   
-  vec4 getRayPoint(vec2 resolution, vec2 fragCoord/*, bool isLeft*/){ //creates a point that our ray will go through
-    /*if(stereo){
+  vec4 getRayPoint(vec2 resolution, vec2 fragCoord, bool isLeft){ //creates a point that our ray will go through
+    if(isStereo == 1){
       resolution.x = resolution.x * 0.5;
       if(!isLeft) { fragCoord.x = fragCoord.x - resolution.x; }
-    }*/
-    if(isStereo != 0) { resolution.x = resolution.x * 0.5; }
-    if(isStereo == 1) { fragCoord.x = fragCoord.x - resolution.x; }
+    }
     vec2 xy = 0.2*((fragCoord - 0.5*resolution)/resolution.x);
     float z = 0.1/tan(radians(fov*0.5));
     vec4 p =  hypNormalize(vec4(xy,-z,1.0));
@@ -317,15 +315,9 @@ BEGIN FRAGMENT
   
   void main(){
     vec4 rayOrigin = ORIGIN;
-    vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy);
-    //stereo translations
-    if(isStereo != 0){
-      rayOrigin *= stereoBoost;
-      rayDirV *= stereoBoost;
-    }
-    /*bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
+    bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
     vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy, isLeft);
-    if(stereo){
+    if(isStereo == 1){
       if(isLeft){
         rayOrigin *= leftBoost;
         rayDirV *= leftBoost;
@@ -334,7 +326,7 @@ BEGIN FRAGMENT
         rayOrigin *= rightBoost;
         rayDirV *= rightBoost;
       }
-    }*/
+    }
 
     //camera position must be translated in hyperboloid -----------------------
     rayOrigin *= currentBoost;
