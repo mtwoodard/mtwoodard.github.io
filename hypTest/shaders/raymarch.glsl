@@ -19,11 +19,14 @@ BEGIN FRAGMENT
   const float halfCubeWidthKlein = 0.5773502692;
   const float globalObjectRadius = 0.2;
   const vec4 ORIGIN = vec4(0,0,0,1);
+
+  //generated in JS using translateByVector(new THREE.Vector3(-c_ipDist,0,0));
   const mat4 leftBoost = mat4(1.0005120437408037, 0, 0, -0.032005463133657125,
                               0, 1, 0, 0,
                               0, 0, 1, 0,
                               -0.032005463133657125, 0, 0, 1.0005120437408037);
-
+                              
+  //generated in JS using translateByVector(new THREE.Vector3(c_ipDist,0,0));
   const mat4 rightBoost = mat4(1.0005120437408037, 0, 0, 0.032005463133657125,
                                0, 1, 0, 0,
                                0, 0, 1, 0,
@@ -41,7 +44,6 @@ BEGIN FRAGMENT
   vec4 sampleTangentVector = vec4(1, 1, 1, 1);
   vec4 globalLightColor = ORIGIN;
   int hitWhich = 0;
-  //bool stereo = true;
   //-------------------------------------------
   //Translation & Utility Variables
   //--------------------------------------------
@@ -49,7 +51,6 @@ BEGIN FRAGMENT
   uniform vec2 screenResolution;
   uniform mat4 invGenerators[6];
   uniform mat4 currentBoost;
-  uniform mat4 stereoBoost;
   uniform mat4 cellBoost; 
   uniform mat4 invCellBoost;
   //--------------------------------------------
@@ -184,18 +185,17 @@ BEGIN FRAGMENT
   
   vec3 phongModel(mat4 totalFixMatrix){
     vec4 SP = sampleEndPoint;
+    vec4 TLP; //translated light position
     vec4 V = -sampleTangentVector;
     vec3 color = vec3(0.0);
-    //--------------------------------------------
+    //--------------------------------------------------
     //Lighting Calculations
-    //--------------------------------------------
-    vec4 TLP; //translated light position
-    //Standard Light Objects
-    for(int i = 0; i<4; i++){ //4 is the number of lights we can use
-     // if(lightIntensities[i].w != 0.0){ since this is hard coded we can just assume that w != 0.0
+    //--------------------------------------------------
+    //usually we'd check to ensure there are 4 lights
+    //however this is version is hardcoded so we won't
+    for(int i = 0; i<4; i++){ 
         TLP = lightPositions[i]*invCellBoost*totalFixMatrix;
         color += lightingCalculations(SP, TLP, V, vec3(1.0), lightIntensities[i]);
-      //}
     }
     return color;
   }
@@ -224,13 +224,11 @@ BEGIN FRAGMENT
       }
   }
   
-  vec4 getRayPoint(vec2 resolution, vec2 fragCoord/*, bool isLeft*/){ //creates a point that our ray will go through
-    /*if(stereo){
+  vec4 getRayPoint(vec2 resolution, vec2 fragCoord, bool isLeft){ //creates a point that our ray will go through
+    if(isStereo == 1){
       resolution.x = resolution.x * 0.5;
       if(!isLeft) { fragCoord.x = fragCoord.x - resolution.x; }
-    }*/
-    if(isStereo != 0) { resolution.x = resolution.x * 0.5; }
-    if(isStereo == 1) { fragCoord.x = fragCoord.x - resolution.x; }
+    }
     vec2 xy = 0.2*((fragCoord - 0.5*resolution)/resolution.x);
     float z = 0.1/tan(radians(fov*0.5));
     vec4 p =  hypNormalize(vec4(xy,-z,1.0));
@@ -317,15 +315,10 @@ BEGIN FRAGMENT
   
   void main(){
     vec4 rayOrigin = ORIGIN;
-    vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy);
     //stereo translations
-    if(isStereo != 0){
-      rayOrigin *= stereoBoost;
-      rayDirV *= stereoBoost;
-    }
-    /*bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
+    bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
     vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy, isLeft);
-    if(stereo){
+    if(isStereo == 1){
       if(isLeft){
         rayOrigin *= leftBoost;
         rayDirV *= leftBoost;
@@ -334,7 +327,7 @@ BEGIN FRAGMENT
         rayOrigin *= rightBoost;
         rayDirV *= rightBoost;
       }
-    }*/
+    }
 
     //camera position must be translated in hyperboloid -----------------------
     rayOrigin *= currentBoost;

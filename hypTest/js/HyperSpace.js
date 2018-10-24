@@ -14,7 +14,7 @@ var g_cellBoost;
 var g_invCellBoost;
 var g_phoneOrient;
 var g_raymarch;
-var g_vr = 1;
+var g_vr = 0;
 var g_leftBoost, g_rightBoost;
 
 //-------------------------------------------------------
@@ -30,10 +30,6 @@ var gens;
 var invGens;
 
 var createGenerators = function(){
-  g_leftBoost = translateByVector(new THREE.Vector3(-c_ipDist,0,0));
-  console.log(g_leftBoost);
-  g_rightBoost = translateByVector(new THREE.Vector3(c_ipDist,0,0));
-  console.log(g_rightBoost);
   var gen0 = translateByVector(new THREE.Vector3(2.0*hCWH,0.0,0.0));
   var gen1 = translateByVector(new THREE.Vector3(-2.0*hCWH,0.0,0.0));
   var gen2 = translateByVector(new THREE.Vector3(0.0,2.0*hCWH,0.0));
@@ -68,7 +64,7 @@ var initObjects = function(){
 //-------------------------------------------------------
 
 var raymarchPass = function(screenRes){
-  var pass = new THREE.RaymarchPass(THREE.ray);
+  var pass = new THREE.ShaderPass(THREE.ray);
   pass.uniforms.isStereo.value = g_vr;
   pass.uniforms.screenResolution.value = screenRes;
   pass.uniforms.invGenerators.value = invGens;
@@ -115,7 +111,7 @@ var init = function(){
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
   composer.addPass(FXAA);
   //Finish Up
-  g_raymarch.renderToScreen = true;
+  FXAA.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------
@@ -128,9 +124,7 @@ var init = function(){
 var animate = function(){
   stats.begin();
   requestAnimationFrame(animate);
-  console.time("render");
   composer.render();
-  console.timeEnd("render");
   g_controls.update();
   stats.end();
 }

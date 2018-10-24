@@ -171,10 +171,6 @@ document.addEventListener('keyup', function(event){key(event, -1);}, false);
 //--------------------------------------------------------------------
 function resetToMono(){
 	g_vr = 0;
-	//set renderer info
-	g_renderer.setSize(window.innerWidth, window.innerHeight);
-	g_renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
-	g_renderer.setScissorTest(false);
 	//set raymarch info
 	g_raymarch.uniforms.isStereo.value = 0;
 	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
@@ -184,7 +180,7 @@ function resetToMono(){
 function tap(event, sign){
 	if(event.target.id === "vr-icon"){
 		if(g_vr === 1) resetToMono();
-		else g_vr = 1;
+		else { g_raymarch.uniforms.isStereo.value = 1; g_vr = 1; }
 	}
 	g_controls.manualMoveRate[0] += sign;
 }
@@ -198,7 +194,7 @@ document.addEventListener('touchend', function(event){tap(event, -1);}, false);
 function click(event){
 	if(event.target.id === "vr-icon"){
 		if(g_vr === 1) resetToMono();
-		else g_vr = 1;
+		else{ g_raymarch.uniforms.isStereo.value = 1; g_vr = 1; }
 	}
 }
 document.addEventListener('click', click);
