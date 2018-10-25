@@ -97,11 +97,11 @@ var init = function(){
   //Raymarch
   g_raymarch = raymarchPass(screenRes);
   composer.addPass(g_raymarch);
-  /*Antialiasing
+  //Antialiasing
   var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
-  composer.addPass(FXAA);*/
+  composer.addPass(FXAA);
   //Finish Up
-  g_raymarch.renderToScreen = true;
+  FXAA.renderToScreen = true;
   //------------------------------------------------------
   //Let's get rendering
   //------------------------------------------------------

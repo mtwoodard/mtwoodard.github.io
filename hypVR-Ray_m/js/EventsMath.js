@@ -1,4 +1,3 @@
-
 //----------------------------------------------------------------------
 //	Dot Product
 //----------------------------------------------------------------------
@@ -141,33 +140,15 @@ var PointLightObject = function(pos, colorInt){ //position is a euclidean Vector
 
 //--------------------------------------------------------------------
 // Handle window resize
-/*--------------------------------------------------------------------
+//--------------------------------------------------------------------
 var onResize = function(){
-	g_effect.setSize(window.innerWidth, window.innerHeight);
-	if(g_material != null){
-		g_material.uniforms.screenResolution.value.x = window.innerWidth;
-		g_material.uniforms.screenResolution.value.y = window.innerHeight;
-	}
+	g_renderer.setSize(window.innerWidth, window.innerHeight);
+	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+	g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
 }
-window.addEventListener('resize', onResize, false);*/
+window.addEventListener('resize', onResize, false);
 
 //EVENTS**************************************************************
-
-//--------------------------------------------------------------------
-// Listens for double click to enter fullscreen VR mode
-//--------------------------------------------------------------------
-document.body.addEventListener('click', function(event){
-if(event.target.id === "vr-icon"){
-	event.target.style.display = "none";
-	g_effect.phoneVR.setVRMode(!renderer.phoneVR.isVRMode);
-}
-if(g_effect.phoneVR.orientationIsAvailable()){
-	g_effect.setFullScreen(true);
-	if(typeof window.screen.orientation !== 'undefined' && typeof window.screen.orientation.lock === 'function')
-		window.screen.orientation.lock('landscape-primary');
-}
-});
-
 //--------------------------------------------------------------------
 // Listen for keys for movement/rotation
 //--------------------------------------------------------------------
@@ -188,9 +169,43 @@ document.addEventListener('keyup', function(event){key(event, -1);}, false);
 //--------------------------------------------------------------------
 // Phone screen tap for movement
 //--------------------------------------------------------------------
+function resetToMono(){
+	g_vr = 0;
+	//set raymarch info
+	g_raymarch.uniforms.isStereo.value = 0;
+	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+	g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
+}
+
 function tap(event, sign){
+	if(event.target.id === "vr-icon"){
+		if(g_vr === 1) resetToMono();
+		else { g_raymarch.uniforms.isStereo.value = 1; g_vr = 1; }
+	}
 	g_controls.manualMoveRate[0] += sign;
 }
 
 document.addEventListener('touchstart', function(event){tap(event, 1);}, false);
 document.addEventListener('touchend', function(event){tap(event, -1);}, false);
+
+//--------------------------------------------------------------------
+// Listen for mouse clicks
+//--------------------------------------------------------------------
+function click(event){
+	if(event.target.id === "vr-icon"){
+		if(g_vr === 1) resetToMono();
+		else{ g_raymarch.uniforms.isStereo.value = 1; g_vr = 1; }
+	}
+}
+document.addEventListener('click', click);
+
+//--------------------------------------------------------------------
+// Get phone's orientation
+//--------------------------------------------------------------------
+function getScreenOrientation(event){
+    g_phoneOrient[0] = event.beta;
+    g_phoneOrient[1] = event.gamma;
+    g_phoneOrient[2] = event.alpha;
+}
+
+window.addEventListener('deviceorientation', getScreenOrientation);

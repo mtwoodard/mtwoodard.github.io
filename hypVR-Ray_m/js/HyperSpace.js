@@ -1,30 +1,33 @@
 //-------------------------------------------------------
+// Constant Variables
+//-------------------------------------------------------
+const c_ipDist = 0.03200000151991844;
+
+//-------------------------------------------------------
 // Global Variables
 //-------------------------------------------------------
-var g_effect;
 var g_material;
 var g_controls;
+var g_renderer;
 var g_currentBoost;
-var g_leftCurrentBoost, g_rightCurrentBoost;
-var g_cellBoost, g_invCellBoost;
-var g_screenResolution;
+var g_cellBoost;
+var g_invCellBoost;
+var g_phoneOrient;
+var g_raymarch;
+var g_vr = 0;
+var g_leftBoost, g_rightBoost;
 
 //-------------------------------------------------------
 // Scene Variables
 //-------------------------------------------------------
-var scene, renderer, camera;
-
+var composer;
+var stats;
 //-------------------------------------------------------
 // Sets up precalculated values
 //-------------------------------------------------------
 var hCWH = 0.6584789485;
 var gens;
 var invGens;
-
-var initValues = function(){
-	gens = createGenerators();
-  invGens = invGenerators(gens);
-}
 
 var createGenerators = function(){
   var gen0 = translateByVector(new THREE.Vector3(2.0*hCWH,0.0,0.0));
@@ -42,7 +45,7 @@ var invGenerators = function(genArr){
 
 
 //-------------------------------------------------------
-// Sets up the lights
+// Sets up the global objects
 //-------------------------------------------------------
 var lightPositions = [];
 var lightIntensities = [];
@@ -55,71 +58,63 @@ var initObjects = function(){
   PointLightObject(new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
   globalObjectBoost = new THREE.Matrix4().multiply(translateByVector(new THREE.Vector3(-0.5,0,0)));
 }
+
+//-------------------------------------------------------
+// Set up shader
+//-------------------------------------------------------
+
+var raymarchPass = function(screenRes){
+  var pass = new THREE.ShaderPass(THREE.ray);
+  pass.uniforms.isStereo.value = g_vr;
+  pass.uniforms.screenResolution.value = screenRes;
+  pass.uniforms.invGenerators.value = invGens;
+  pass.uniforms.currentBoost.value = g_currentBoost;
+  pass.uniforms.cellBoost.value = g_cellBoost;
+  pass.uniforms.invCellBoost.value = g_invCellBoost;
+  pass.uniforms.lightPositions.value = lightPositions;
+  pass.uniforms.lightIntensities.value = lightIntensities;
+  pass.uniforms.globalObjectBoost.value = globalObjectBoost;
+  return pass;
+}
+
 //-------------------------------------------------------
 // Sets up the scene
 //-------------------------------------------------------
 var init = function(){
   //Setup our THREE scene--------------------------------
-	time = Date.now();
-  scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer();
-  document.body.appendChild(renderer.domElement);
-  g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-  g_effect = new THREE.VREffect(renderer);
-  g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
-  camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
-  g_controls = new THREE.Controls();
-  g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
-  g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
-  g_invCellBoost = new THREE.Matrix4();
-	initValues();
-  initObjects();
-  finishInit();
-}
+  g_renderer = new THREE.WebGLRenderer();
 
-/*var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
-  var loader = new THREE.FileLoader();
-  loader.setResponseType('text');
-  loader.load('shaders/fragment.glsl',function(main){
-    //pass full shader string to finish our init
-    finishInit(main);
-  });
-}*/
+  var screenRes = new THREE.Vector2(window.innerWidth, window.innerHeight);
+  g_renderer.setSize(screenRes.x, screenRes.y);
+  document.body.appendChild(g_renderer.domElement);
 
-var finishInit = function(){
-  g_material = new THREE.ShaderMaterial({
-    uniforms:{
-      isStereo:{type: "i", value: 0},
-      screenResolution:{type:"v2", value:g_screenResolution},
-      invGenerators:{type:"m4v", value:invGens},
-      currentBoost:{type:"m4", value:g_currentBoost},
-      leftCurrentBoost:{type:"m4", value:g_leftCurrentBoost},
-      rightCurrentBoost:{type:"m4",value:g_rightCurrentBoost},
-      cellBoost:{type:"m4", value:g_cellBoost},
-      invCellBoost:{type:"m4", value:g_invCellBoost},
-			lightPositions:{type:"v4v", value:lightPositions},
-      lightIntensities:{type:"v3v", value:lightIntensities},
-      globalObjectBoost:{type:"m4", value:globalObjectBoost}    
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: document.getElementById('fragmentShader').textContent,
-    transparent:true
-  });
-  //Setup a "quad" to render on-------------------------
-  var geom = new THREE.BufferGeometry();
-  var vertices = new Float32Array([
-    -1.0, -1.0, 0.0,
-     1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
+  //Initialize varirables, objects, and stats
+  stats = new Stats(); stats.showPanel(1); stats.showPanel(2); stats.showPanel(0); document.body.appendChild(stats.dom);
+  g_controls = new THREE.Controls(); g_currentBoost = new THREE.Matrix4();  g_cellBoost = new THREE.Matrix4(); g_invCellBoost = new THREE.Matrix4();
+  gens = createGenerators(); invGens = invGenerators(gens); initObjects();
+  g_phoneOrient = [null, null, null];
 
-    -1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
-    -1.0,  1.0, 0.0
-  ]);
-  geom.addAttribute('position',new THREE.BufferAttribute(vertices,3));
-  var mesh = new THREE.Mesh(geom, g_material);
-  scene.add(mesh);
-  
+  //-------------------------------------------------------
+  // "Post" Processing - Since we are not using meshes we actually 
+  //                     don't need to do traditional rendering we 
+  //                     can just use post processed effects
+  //-------------------------------------------------------
+
+  //Composer **********************************************
+  composer = new THREE.EffectComposer(g_renderer);
+
+  //Shader Passes *****************************************
+  //Raymarch
+  g_raymarch = raymarchPass(screenRes);
+  composer.addPass(g_raymarch);
+  //Antialiasing
+  var FXAA = new THREE.ShaderPass(THREE.FXAAShader);
+  composer.addPass(FXAA);
+  //Finish Up
+  FXAA.renderToScreen = true;
+  //------------------------------------------------------
+  //Let's get rendering
+  //------------------------------------------------------
   animate();
 }
 
@@ -127,8 +122,11 @@ var finishInit = function(){
 // Where our scene actually renders out to screen
 //-------------------------------------------------------
 var animate = function(){
+  stats.begin();
+  requestAnimationFrame(animate);
+  composer.render();
   g_controls.update();
-  g_effect.render(scene, camera, animate);
+  stats.end();
 }
 
 //-------------------------------------------------------
