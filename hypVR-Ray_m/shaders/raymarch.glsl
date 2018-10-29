@@ -316,7 +316,8 @@ BEGIN FRAGMENT
   
   void main(){
     vec4 rayOrigin = ORIGIN;
-    //stereo translations
+
+    //stereo translations ----------------------------------------------------
     bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
     vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy, isLeft);
     if(isStereo == 1){
