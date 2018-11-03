@@ -18,9 +18,11 @@ THREE.ShaderPass = function ( shader, textureID ) {
 
 		this.uniforms = THREE.UniformsUtils.clone( shader.uniforms );
 
+		this.defines = Object.assign( {}, shader.defines );
+
 		this.material = new THREE.ShaderMaterial( {
 
-			defines: Object.assign( {}, shader.defines ),
+			defines: this.defines,
 			uniforms: this.uniforms,
 			vertexShader: shader.vertexShader,
 			fragmentShader: shader.fragmentShader

@@ -4,7 +4,7 @@
 var g_cut4 = 2;
 var g_sphereRad = 0.996216;
 var g_tubeRad = 0.15;
-var g_horospherSize = -0.951621;
+var g_horosphereSize = -0.951621;
 var g_planeOffset = 0.75;
 var g_targetFPS = {value:27.5};
 
@@ -37,11 +37,12 @@ function updateEyes(){
   g_effect.leftEyeTranslation.x = guiInfo.eToHScale * guiInfo.halfIpDistance;
   g_effect.rightEyeTranslation.x = guiInfo.eToHScale * -guiInfo.halfIpDistance;
 
-  g_leftCurrentBoost = translateByVector(g_geometry,g_effect.leftEyeTranslation);
-  g_rightCurrentBoost = translateByVector(g_geometry,g_effect.rightEyeTranslation);
+  var leftCurrentBoost = translateByVector(g_geometry,g_effect.leftEyeTranslation);
+  var rightCurrentBoost = translateByVector(g_geometry,g_effect.rightEyeTranslation);
   g_effect.getEyeRotation(g_effect.leftEyeTranslation.x);
-  g_material.uniforms.leftCurrentBoost.value = g_leftCurrentBoost;
-  g_material.uniforms.rightCurrentBoost.value = g_rightCurrentBoost;
+
+  g_raymarch.uniforms.stereoBoosts.value[0] = leftCurrentBoost;
+  g_raymarch.uniforms.stereoBoosts.value[1] = rightCurrentBoost;
 }
 
 function getGeometryFrag()
@@ -106,7 +107,7 @@ function updateUniformsFromUI()
 	var midEdgeDir = new THREE.Vector3(Math.cos(Math.PI / 4), Math.cos(Math.PI / 4), 1);
 	var midEdge = constructHyperboloidPoint(midEdgeDir, g_sphereRad);
 	var distToMidEdge = horosphereHSDF(midEdge, idealCubeCornerKlein, -g_sphereRad);
-	g_horospherSize = -(g_sphereRad - distToMidEdge);
+	g_horosphereSize = -(g_sphereRad - distToMidEdge);
 
 	// planeOffset
 	var dualPoint = new THREE.Vector4(hCWK, hCWK, hCWK, 1.0).geometryNormalize(g_geometry);
@@ -121,7 +122,7 @@ function updateUniformsFromUI()
 	g_material.uniforms.cut4.value = g_cut4;
 	g_material.uniforms.sphereRad.value = g_sphereRad;
 	g_material.uniforms.tubeRad.value = g_tubeRad;
-	g_material.uniforms.horosphereSize.value = g_horospherSize;
+	g_material.uniforms.horosphereSize.value = g_horosphereSize;
 	g_material.uniforms.planeOffset.value = g_planeOffset;
 	g_material.uniforms.attnModel.value = guiInfo.falloffModel;
 }

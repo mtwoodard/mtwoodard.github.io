@@ -184,12 +184,12 @@ void main(){
   
   if(isStereo != 0){ //move left or right for stereo
     if(isStereo == -1){
-      rayOrigin *= leftCurrentBoost;
-      rayDirV *= leftCurrentBoost;
+      rayOrigin *= stereoBoost[0];
+      rayDirV *= stereoBoost[0];
     }
     else{
-      rayOrigin *= rightCurrentBoost;
-      rayDirV *= rightCurrentBoost;
+      rayOrigin *= stereoBoost[1];
+      rayDirV *= stereoBoost[1];
     }
   }
   rayOrigin *= currentBoost;

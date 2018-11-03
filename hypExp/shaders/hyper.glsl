@@ -1,3 +1,11 @@
+BEGIN VERTEX
+void main()
+{
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position.xyz, 1.0);
+}
+END VERTEX
+
+BEGIN FRAGMENT
 //--------------------------------------------
 //Global Constants
 //--------------------------------------------
@@ -27,8 +35,7 @@ uniform vec2 screenResolution;
 uniform float fov;
 uniform mat4 invGenerators[6];
 uniform mat4 currentBoost;
-uniform mat4 leftCurrentBoost;
-uniform mat4 rightCurrentBoost;
+uniform mat4 stereoBoosts[2];
 uniform mat4 cellBoost; 
 uniform mat4 invCellBoost;
 uniform int maxSteps;
@@ -36,10 +43,12 @@ uniform int maxSteps;
 //Lighting Variables & Global Object Variables
 //--------------------------------------------
 uniform vec4 lightPositions[4];
-uniform vec4 lightIntensities[6]; //w component is the light's attenuation -- 6 since we need controllers
+//w component is the light's attenuation -- 6 since we need controllers
+uniform vec4 lightIntensities[6]; 
 uniform int attnModel;
 uniform sampler2D texture;
-uniform int controllerCount; //Max is two
+//Max is two
+uniform int controllerCount; 
 uniform mat4 controllerBoosts[2];
 //uniform vec4 controllerDualPoints[6];
 uniform mat4 globalObjectBoosts[4];
@@ -173,10 +182,6 @@ vec3 lightingCalculations(vec4 SP, vec4 TLP, vec4 V, vec3 baseColor, vec4 lightI
   //Calculate Diffuse Component
   float nDotL = max(geometryDot(N, L),0.0);
   vec3 diffuse = lightIntensity.rgb * nDotL;
-  //Check if nDotL = 0  if so don't bother with shadowMarch
-  //if(nDotL == 0.0)
-  //  shadow = 0.0;
-  //shadow = shadowMarch(L, distToLight);
   //Calculate Specular Component
   float rDotV = max(geometryDot(R, V),0.0);
   vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);
@@ -292,7 +297,7 @@ vec4 pointOnGeodesicAtInfinity(vec4 u, vec4 vPrime){ // returns point on the lig
 //---------------------------------------------------------------------
 // A horosphere can be constructed by offseting from a standard horosphere.
 // Our standard horosphere will have a center in the direction of lightPoint
-// and go through the origin. Negative offsets will "shrink" it.
+// and go through the origin. Negative offsets will 'shrink' it.
 float horosphereHSDF(vec4 samplePoint, vec4 lightPoint, float offset){
   return log(-geometryDot(samplePoint, lightPoint)) - offset;
 }
@@ -521,3 +526,4 @@ void main(){
         gl_FragColor = vec4(color, 1.0);
     }
 }
+END FRAGMENT

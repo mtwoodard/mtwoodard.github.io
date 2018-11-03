@@ -37,8 +37,8 @@ THREE.VREffect = function ( renderer, done ) {
 			if(guiInfo.rotateEyes){
 				leftEyeRotation.setFromAxisAngle(new THREE.Vector3(0,1,0), turningAngle);
 				rightEyeRotation.setFromAxisAngle(new THREE.Vector3(0,1,0), -turningAngle);
-				g_leftCurrentBoost.multiply(new THREE.Matrix4().makeRotationFromQuaternion(leftEyeRotation));
-				g_rightCurrentBoost.multiply(new THREE.Matrix4().makeRotationFromQuaternion(rightEyeRotation));
+				g_stereoBoosts[0].multiply(new THREE.Matrix4().makeRotationFromQuaternion(leftEyeRotation));
+				g_stereoBoosts[1].multiply(new THREE.Matrix4().makeRotationFromQuaternion(rightEyeRotation));
 			}
 		}
 
@@ -46,8 +46,8 @@ THREE.VREffect = function ( renderer, done ) {
 		self.phoneVR = new PhoneVR();
 		self.leftEyeTranslation = { x: -0.03200000151991844, y: -0, z: -0, w: 0 };
 		self.rightEyeTranslation = { x: 0.03200000151991844, y: -0, z: -0, w: 0 };
-		g_leftCurrentBoost = translateByVector(g_geometry, self.leftEyeTranslation);
-		g_rightCurrentBoost = translateByVector(g_geometry, self.rightEyeTranslation);
+		g_stereoBoosts[0] = translateByVector(g_geometry, self.leftEyeTranslation);
+		g_stereoBoosts[1]  = translateByVector(g_geometry, self.rightEyeTranslation);
 		self.getEyeRotation(self.leftEyeTranslation.x);
 
 		if (!navigator.getVRDisplays && !navigator.mozGetVRDevices && !navigator.getVRDevices) {
@@ -63,8 +63,8 @@ THREE.VREffect = function ( renderer, done ) {
 			//we need these to be objects instead of arrays in order to process the information correctly
 			self.leftEyeTranslation = {x: self.leftEyeTranslation[0], y:self.leftEyeTranslation[1], z:self.leftEyeTranslation[2], w:0 };
 			self.rightEyeTranslation = {x: self.rightEyeTranslation[0], y:self.rightEyeTranslation[1], z:self.rightEyeTranslation[2], w:0}
-			g_leftCurrentBoost = translateByVector(g_geometry, self.leftEyeTranslation);
-			g_rightCurrentBoost = translateByVector(g_geometry, self.rightEyeTranslation);
+			g_stereoBoosts[0] = translateByVector(g_geometry, self.leftEyeTranslation);
+			g_stereoBoosts[1] = translateByVector(g_geometry, self.rightEyeTranslation);
 			self.getEyeRotation(self.leftEyeTranslation.x);
 		}
 
@@ -166,7 +166,7 @@ THREE.VREffect = function ( renderer, done ) {
 		}
 
 		// Regular render mode if not HMD
-		g_material.uniforms.isStereo.value = 0;
+		g_raymarch.uniforms.isStereo.value = 0;
 		renderer.render.apply( this._renderer, [scene, camera]  );
 	};
 

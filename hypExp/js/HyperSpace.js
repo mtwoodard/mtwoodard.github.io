@@ -1,6 +1,7 @@
 //-------------------------------------------------------
 // Global Variables
 //-------------------------------------------------------
+var g_renderer;
 var g_effect;
 var g_virtCamera;
 var g_material;
@@ -8,6 +9,7 @@ var g_controls;
 var g_geometry;
 var g_rotation;
 var g_currentBoost;
+var g_stereoBoosts = [];
 var g_leftCurrentBoost;
 var g_rightCurrentBoost;
 var g_cellBoost;
@@ -15,6 +17,7 @@ var g_invCellBoost;
 var g_screenResolution;
 var g_controllerBoosts = [];
 var g_controllerDualPoints = [];
+var g_vr;
 
 //-------------------------------------------------------
 // Scene Variables
@@ -161,10 +164,10 @@ var init = function(){
 	time = Date.now();
 	textFPS = document.getElementById('fps');
   scene = new THREE.Scene();
-  renderer = new THREE.WebGLRenderer();
-  document.body.appendChild(renderer.domElement);
+  g_renderer = new THREE.WebGLRenderer();
+  document.body.appendChild(g_renderer.domElement);
   g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-  g_effect = new THREE.VREffect(renderer);
+  g_effect = new THREE.VREffect(g_renderer);
   camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
   g_virtCamera = new THREE.PerspectiveCamera(90,1,0.1,1);
   g_virtCamera.position.z = 0.1;
@@ -180,121 +183,65 @@ var init = function(){
 	initValues(g_geometry);
   initLights();
   initObjects(g_geometry);
-	//We need to load the shaders from file
-  //since web is async we need to wait on this to finish
-  loadShaders();
-}
-
-var globalsFrag;
-var geometryFrag = [];
-var mainFrag;
-var scenesFrag = [];
-
-var loadShaders = function(){ //Since our shader is made up of strings we can construct it from parts
-  var loader = new THREE.FileLoader();
-  loader.setResponseType('text');
-  loader.load('shaders/fragment.glsl',function(main){
-    loader.load('shaders/simplexCuts.glsl', function(scene){
-      loader.load('shaders/hyperbolic.glsl', function(hyperbolic){
-        loader.load('shaders/globalsInclude.glsl', function(globals){
-          //pass full shader string to finish our init
-          globalsFrag = globals;
-          geometryFrag.push(hyperbolic);
-          scenesFrag.push(scene);
-          mainFrag = main;
-          finishInit(globals.concat(hyperbolic).concat(scene).concat(main));
-        loader.load('shaders/edgeTubes.glsl', function(tubes){
-            loader.load('shaders/medialSurfaces.glsl', function(medial){
-              loader.load('shaders/cubeSides.glsl', function(cubes){
-                scenesFrag.push(tubes);
-                scenesFrag.push(medial);
-                scenesFrag.push(cubes);
-              });
-            });
-          });
-          loader.load('shaders/euclidean.glsl', function(euclidean){
-            loader.load('shaders/spherical.glsl', function(spherical){
-              geometryFrag.push(euclidean);
-              geometryFrag.push(spherical);
-            });
-          });
-        });
-      });
-    });
-  });
-  
-}
-
-var finishInit = function(fShader){
-//  console.log(fShader);
-  g_material = new THREE.ShaderMaterial({
-    uniforms:{
-      isStereo:{type: "i", value: 0},
-      geometry:{type: "i", value: 3},
-      screenResolution:{type:"v2", value:g_screenResolution},
-      fov:{type:"f", value:g_virtCamera.fov},
-      invGenerators:{type:"m4v", value:invGens},
-      currentBoost:{type:"m4", value:g_currentBoost},
-      leftCurrentBoost:{type:"m4", value:g_leftCurrentBoost},
-      rightCurrentBoost:{type:"m4",value:g_rightCurrentBoost},
-      cellBoost:{type:"m4", value:g_cellBoost},
-      invCellBoost:{type:"m4", value:g_invCellBoost},
-      maxSteps:{type:"i", value:maxSteps},
-			lightPositions:{type:"v4v", value:lightPositions},
-      lightIntensities:{type:"v3v", value:lightIntensities},
-      attnModel:{type:"i", value:attnModel},
-      texture:{type:"t", value: new THREE.TextureLoader().load("images/concrete2.png")},
-      controllerCount:{type:"i", value: 0},
-      controllerBoosts:{type:"m4", value:g_controllerBoosts},
-      //controllerDualPoints:{type:"v4v", value:g_controllerDualPoints},
-      globalObjectBoosts:{type:"m4v", value:globalObjectBoosts},
-      invGlobalObjectBoosts:{type:"m4v", value:invGlobalObjectBoosts},
-      globalObjectRadii:{type:"v3v", value:globalObjectRadii},
-      globalObjectTypes:{type:"iv1", value: globalObjectTypes},
-			halfCubeDualPoints:{type:"v4v", value:hCDP},
-      halfCubeWidthKlein:{type:"f", value: hCWK},
-	  	cut4:{type:"i", value:g_cut4},
-      sphereRad:{type:"f", value:g_sphereRad},
-      tubeRad:{type:"f", value:g_tubeRad},
-      horosphereSize:{type:"f", value:g_horospherSize},
-      planeOffset:{type:"f", value:g_planeOffset}
-    },
-    defines: {
-      NUM_LIGHTS: lightPositions.length,
-      NUM_OBJECTS: globalObjectBoosts.length
-    },
-    vertexShader: document.getElementById('vertexShader').textContent,
-    fragmentShader: fShader,
-    transparent:true
-  });
-  g_effect.setSize(g_screenResolution.x, g_screenResolution.y);
-  //Setup dat GUI --- SceneManipulator.js
+  //Setup dat GUI --- UI.js
   initGui();
-  //Setup a "quad" to render on-------------------------
-  geom = new THREE.BufferGeometry();
-  var vertices = new Float32Array([
-    -1.0, -1.0, 0.0,
-     1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
 
-    -1.0, -1.0, 0.0,
-     1.0,  1.0, 0.0,
-    -1.0,  1.0, 0.0
-  ]);
-  geom.addAttribute('position',new THREE.BufferAttribute(vertices,3));
-  mesh = new THREE.Mesh(geom, g_material);
-  scene.add(mesh);
-  var scaleMatrix = new THREE.Matrix4().set(
-		0.8, 0, 0, 0,
-		0, 0.8, 0, 0,
-		0, 0, 0.4, 0,
-		0, 0, 0, 1
-  );
+  //-------------------------------------------------------
+  // "Post" Processing - Since we are not using meshes we actually 
+  //                     don't need to do traditional rendering we 
+  //                     can just use post processed effects
+  //-------------------------------------------------------
   
+  //Composer **********************************************
+  composer = new THREE.EffectComposer(g_renderer);
+  
+  //Shader Passes *****************************************
+  //Raymarch
+  g_raymarch = raymarchPass(g_screenResolution);
+  composer.addPass(g_raymarch);
+  g_raymarch.renderToScreen = true;
+    
   //Generator for controllerScaleMatrix on the glsl side
   //console.log(translateByVector(g_geometry, new THREE.Vector3(0,0,0.2)).multiply(scaleMatrix));
-
+  
   animate();
+}
+
+var raymarchPass = function(screenRes){
+  var pass = new THREE.ShaderPass(THREE.hyper);
+  
+  //Our massive list of uniforms
+  pass.uniforms.isStereo.value = g_vr;
+  pass.uniforms.screenResolution.value = screenRes;
+  pass.uniforms.invGenerators.value = invGens;
+  pass.uniforms.currentBoost.value = g_currentBoost;
+  pass.uniforms.stereoBoosts.value = g_stereoBoosts; // need to make array with leftCurrentBoost and right
+  pass.uniforms.cellBoost.value = g_cellBoost;
+  pass.uniforms.invCellBoost.value = g_invCellBoost;
+  pass.uniforms.maxSteps.value = maxSteps;
+  pass.uniforms.lightPositions.value = lightPositions;
+  pass.uniforms.lightIntensities.value = lightIntensities;
+  pass.uniforms.attnModel.value = attnModel;
+  pass.uniforms.texture.value = new THREE.TextureLoader().load("images/concrete2.png");
+  pass.uniforms.controllerCount.value = 0;
+  pass.uniforms.controllerBoosts.value = g_controllerBoosts;
+  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+  pass.uniforms.invGlobalObjectBoosts.value = invGlobalObjectBoosts;
+  pass.uniforms.globalObjectRadii.value = globalObjectRadii;
+  pass.uniforms.globalObjectTypes.value = globalObjectTypes;
+  pass.uniforms.halfCubeDualPoints.value = hCDP;
+  pass.uniforms.halfCubeWidthKlein.value = hCWK;
+  pass.uniforms.cut4.value = g_cut4;
+  pass.uniforms.sphereRad.value = g_sphereRad;
+  pass.uniforms.tubeRad.value = g_tubeRad;
+  pass.uniforms.horosphereSize.value = g_horosphereSize;
+  pass.uniforms.planeOffset.value = g_planeOffset;
+  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+
+  //Our list of defines
+  pass.defines.NUM_LIGHTS.value = lightPositions.length;
+  pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
+  return pass;
 }
 
 //-------------------------------------------------------
@@ -305,8 +252,8 @@ var animate = function(){
 	//lightPositions[0] = constructHyperboloidPoint(new THREE.Vector3(0,0,1), 0.5 + 0.3*Math.sin((Date.now()-time)/1000));
   maxSteps = calcMaxSteps(fps.getFPS(), maxSteps);
   THREE.VRController.update();
-  g_material.uniforms.maxSteps.value = maxSteps;
-  g_material.uniforms.controllerCount.value = THREE.VRController.controllers.length;
+  g_raymarch.uniforms.maxSteps.value = maxSteps;
+  g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
   g_effect.render(scene, camera, animate);
 }
 
