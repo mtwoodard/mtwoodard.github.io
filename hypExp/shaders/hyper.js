@@ -34,11 +34,6 @@ uniforms: {
 "cut4":     {type:"i", value:0},
 },
 
-defines:{
-"NUM_LIGHTS": 0,
-"NUM_OBJECTS": 0
-},
-
 vertexShader: [
 
 "void main()",
@@ -50,6 +45,8 @@ vertexShader: [
 
 fragmentShader: [
 
+"const int NUM_LIGHTS = 4;",
+"const int NUM_OBJECTS = 2;",
 "//--------------------------------------------",
 "//Global Constants",
 "//--------------------------------------------",
@@ -213,7 +210,7 @@ fragmentShader: [
 "  //Compute final color",
 "  return att*(shadow*((diffuse*baseColor) + specular));",
 "}",
-"vec3 phongModel(mat4 invObjectBoost, bool isGlobal){",
+"vec3 phongModel(mat4 invObjectBoost, bool isGlobal, mat4 totalFixMatrix){",
 "    vec4 V, samplePoint;",
 "    float ambient = 0.1;",
 "    vec3 baseColor = vec3(0.0,1.0,1.0);",
@@ -436,6 +433,7 @@ fragmentShader: [
 "    int fakeI = 0;",
 "    float globalDepth = MIN_DIST; float localDepth = globalDepth;",
 "    vec4 localrO = rO; vec4 localrD = rD;",
+"    mat4 fixMatrix = mat4(1.0);",
 "    totalFixMatrix = mat4(1.0);",
 "    // Trace the local scene, then the global scene:",
 "    for(int i = 0; i< MAX_MARCHING_STEPS; i++){",
@@ -476,6 +474,7 @@ fragmentShader: [
 "        float globalDist = globalSceneSDF(globalEndPoint);",
 "        if(globalDist < EPSILON){",
 "            // hitWhich has now been set",
+"            totalFixMatrix = mat4(1.0);",
 "            sampleEndPoint = globalEndPoint;",
 "            sampleTangentVector = tangentVectorOnGeodesic(rO, rD, globalDepth);",
 "            return;",
@@ -493,12 +492,12 @@ fragmentShader: [
 "    vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy, isLeft);",
 "    if(isStereo == 1){",
 "        if(isLeft){",
-"            rayOrigin *= leftBoost;",
-"            rayDirV *= leftBoost;",
+"            rayOrigin *= stereoBoosts[0];",
+"            rayDirV *= stereoBoosts[0];",
 "        }",
 "        else{",
-"            rayOrigin *= rightBoost;",
-"            rayDirV *= rightBoost;",
+"            rayOrigin *= stereoBoosts[1];",
+"            rayDirV *= stereoBoosts[1];",
 "        }",
 "    }",
 "    //camera position must be translated in hyperboloid -----------------------",
@@ -519,11 +518,15 @@ fragmentShader: [
 "        return;",
 "    }",
 "    else{ // objects",
-"        N = estimateNormal(sampleEndPoint);",
-"        vec3 color;",
-"        color = phongModel(totalFixMatrix);",
-"        gl_FragColor = vec4(color, 1.0);",
-"    }",
+"      N = estimateNormal(sampleEndPoint);",
+"      vec3 color;",
+"      if(hitWhich == 2){ // global objects",
+"        color = phongModel(invGlobalObjectBoosts[0], true, totalFixMatrix);",
+"      }else{ // local objects",
+"        color = phongModel(mat4(1.0), false, totalFixMatrix);",
+"      }",
+"    gl_FragColor = vec4(color, 1.0);",
+"  }",
 "}",
 
 ].join( "\n" )

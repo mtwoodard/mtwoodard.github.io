@@ -18,6 +18,7 @@ var g_screenResolution;
 var g_controllerBoosts = [];
 var g_controllerDualPoints = [];
 var g_vr;
+var g_composer;
 
 //-------------------------------------------------------
 // Scene Variables
@@ -163,15 +164,10 @@ var init = function(){
   //Setup our THREE scene--------------------------------
 	time = Date.now();
 	textFPS = document.getElementById('fps');
-  scene = new THREE.Scene();
   g_renderer = new THREE.WebGLRenderer();
   document.body.appendChild(g_renderer.domElement);
   g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
   g_effect = new THREE.VREffect(g_renderer);
-  camera = new THREE.OrthographicCamera(-1,1,1,-1,1/Math.pow(2,53),1);
-  g_virtCamera = new THREE.PerspectiveCamera(90,1,0.1,1);
-  g_virtCamera.position.z = 0.1;
-  cameraOffset = new THREE.Vector3();
   g_controls = new THREE.Controls();
   g_rotation = new THREE.Quaternion();
   g_controllerBoosts.push(new THREE.Matrix4());
@@ -193,12 +189,12 @@ var init = function(){
   //-------------------------------------------------------
   
   //Composer **********************************************
-  composer = new THREE.EffectComposer(g_renderer);
+  g_composer = new THREE.EffectComposer(g_renderer);
   
   //Shader Passes *****************************************
   //Raymarch
   g_raymarch = raymarchPass(g_screenResolution);
-  composer.addPass(g_raymarch);
+  g_composer.addPass(g_raymarch);
   g_raymarch.renderToScreen = true;
     
   //Generator for controllerScaleMatrix on the glsl side
@@ -239,8 +235,8 @@ var raymarchPass = function(screenRes){
   pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
 
   //Our list of defines
-  pass.defines.NUM_LIGHTS.value = lightPositions.length;
-  pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
+ // pass.defines.NUM_LIGHTS.value = lightPositions.length;
+ // pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
   return pass;
 }
 
@@ -248,13 +244,13 @@ var raymarchPass = function(screenRes){
 // Where our scene actually renders out to screen
 //-------------------------------------------------------
 var animate = function(){
+  requestAnimationFrame(animate);
   g_controls.update();
-	//lightPositions[0] = constructHyperboloidPoint(new THREE.Vector3(0,0,1), 0.5 + 0.3*Math.sin((Date.now()-time)/1000));
   maxSteps = calcMaxSteps(fps.getFPS(), maxSteps);
   THREE.VRController.update();
   g_raymarch.uniforms.maxSteps.value = maxSteps;
   g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
-  g_effect.render(scene, camera, animate);
+  g_composer.render();
 }
 
 //-------------------------------------------------------
