@@ -160,6 +160,7 @@ var raymarchPass = function(){
   //Our massive list of uniforms
   pass.uniforms.isStereo.value = 0;
   pass.uniforms.screenResolution.value = g_screenResolution;
+  pass.uniforms.fov.value = guiInfo.fov;
   pass.uniforms.invGenerators.value = invGens;
   pass.uniforms.currentBoost.value = g_currentBoost;
   pass.uniforms.stereoBoosts.value = g_stereoBoosts; // need to make array with leftCurrentBoost and right
@@ -229,15 +230,15 @@ var init = function(){
   
   //Shader Passes *****************************************
   //Raymarch
-  //g_raymarch = raymarchPass();
-  //g_composer.addPass(g_raymarch);
-  //g_raymarch.renderToScreen = true;
-  var test = new THREE.ShaderPass(THREE.test);
+  g_raymarch = raymarchPass();
+  g_composer.addPass(g_raymarch);
+  g_raymarch.renderToScreen = true;
+  /*var test = new THREE.ShaderPass(THREE.test);
   test.uniforms.isStereo.value = 0;
   test.uniforms.screenResolution.value = g_screenResolution;
   test.uniforms.currentBoost.value = g_currentBoost;
   g_composer.addPass(test);
-  test.renderToScreen = true;
+  test.renderToScreen = true;*/
 
   //Generator for controllerScaleMatrix on the glsl side
   //console.log(translateByVector(g_geometry, new THREE.Vector3(0,0,0.2)).multiply(scaleMatrix));

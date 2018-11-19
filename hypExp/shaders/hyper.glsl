@@ -462,13 +462,13 @@ void main(){
     rayOrigin *= currentBoost;
     rayDirV *= currentBoost;
     //generate direction then transform to hyperboloid ------------------------
-    //vec4 rayDirVPrime = hypDirection(rayOrigin, rayDirV);
+    vec4 rayDirVPrime = hypDirection(rayOrigin, rayDirV);
     //get our raymarched distance back ------------------------
    // mat4 totalFixMatrix = mat4(1.0);
     //raymarch(rayOrigin, rayDirVPrime, totalFixMatrix);
     //gl_FragColor = vec4(0.5,0.0,0.0,1.0);
     //Based on hitWhich decide whether we hit a global object, local object, or nothing
-    gl_FragColor = rayDirV;
+    gl_FragColor = rayDirVPrime;
     /*if(hitWhich == 0){ //Didn't hit anything ------------------------
         gl_FragColor = vec4(0.1);
         return;
