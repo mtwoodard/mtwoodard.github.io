@@ -2,11 +2,9 @@
 // Handle window resize
 //--------------------------------------------------------------------
 var onResize = function(){
-        g_effect.setSize(window.innerWidth, window.innerHeight);
-        if(g_material != null){
-            g_material.uniforms.screenResolution.value.x = window.innerWidth;
-            g_material.uniforms.screenResolution.value.y = window.innerHeight;
-        }
+        g_renderer.setSize(window.innerWidth, window.innerHeight);
+        g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+        g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
   }
   window.addEventListener('resize', onResize, false);
 
@@ -75,15 +73,18 @@ var onResize = function(){
 //--------------------------------------------------------------------
 // Listens for double click to enter fullscreen VR mode
 //--------------------------------------------------------------------
+function resetToMono(){
+	g_vr = 0;
+	//set raymarch info
+	g_raymarch.uniforms.isStereo.value = 0;
+	g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+	g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
+}
+
 document.body.addEventListener('click', function(event){
     if(event.target.id === "vr-icon"){
-        event.target.style.display = "none";
-        g_effect.phoneVR.setVRMode(!renderer.phoneVR.isVRMode);
-    }
-    if(g_effect.phoneVR.orientationIsAvailable()){
-        g_effect.setFullScreen(true);
-        if(typeof window.screen.orientation !== 'undefined' && typeof window.screen.orientation.lock === 'function')
-            window.screen.orientation.lock('landscape-primary');
+        if(g_vr === 1) resetToMono();
+		else { g_raymarch.uniforms.isStereo.value = 1; g_vr = 1; }
     }
 });
 
@@ -95,10 +96,10 @@ function onkey(event){
 
     if(event.keyCode == 90) // z
         g_controls.zeroSensor();
-    else if(event.keyCode == 70) // f
-        g_effect.setFullScreen(true);
-    else if(event.keyCode == 86 || event.keyCode == 13 || event.keyCode == 32)
-        g_effect.toggleVRMode();
+    //else if(event.keyCode == 70) // f
+     //   g_effect.setFullScreen(true);
+   // else if(event.keyCode == 86 || event.keyCode == 13 || event.keyCode == 32)
+       // g_effect.toggleVRMode();
 }
 
 window.addEventListener("keydown", onkey, false);

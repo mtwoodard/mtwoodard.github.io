@@ -50,8 +50,8 @@ uniform vec4 lightIntensities[6];
 uniform int attnModel;
 uniform sampler2D texture;
 //Max is two
-uniform int controllerCount; 
-uniform mat4 controllerBoosts[2];
+//uniform int controllerCount; 
+//uniform mat4 controllerBoosts[2];
 //uniform vec4 controllerDualPoints[6];
 uniform mat4 globalObjectBoosts[4];
 uniform mat4 invGlobalObjectBoosts[4]; 
@@ -60,22 +60,14 @@ uniform int globalObjectTypes[4];
 //--------------------------------------------
 //Scene Dependent Variables
 //--------------------------------------------
-uniform vec4 halfCubeDualPoints[3];
 uniform float halfCubeWidthKlein;
 uniform float sphereRad;
-uniform float tubeRad;
 uniform float horosphereSize;
-uniform float planeOffset;
 
 // The type of cut (1=sphere, 2=horosphere, 3=plane) for the vertex opposite the fundamental simplex's 4th mirror.
 // These integers match our values for the geometry of the honeycomb vertex figure.
 // We'll need more of these later when we support more symmetry groups.
 uniform int cut4;
-
-//Quaternion Math
-vec3 qtransform( vec4 q, vec3 v ){
-  return v + 2.0*cross(cross(v, -q.xyz ) + q.w*v, -q.xyz);
-}
 
 //Raymarch Functions
 float unionSDF(float d1, float d2){
@@ -94,53 +86,141 @@ float acosh(float x){ //must be more than 1
   return log(x + sqrt(x*x-1.0));
 }
 
-//--------------------------------------------------------------------
-// Generalized Functions
-//--------------------------------------------------------------------
-
-vec4 geometryNormalize(vec4 v, bool toTangent);
-vec4 geometryDirection(vec4 u, vec4 v);
-vec4 geometryFixDirection(vec4 u, vec4 v, mat4 fixMatrix);
-float geometryDot(vec4 u, vec4 v);
-float geometryDistance(vec4 u, vec4 v);
-float geometryNorm(vec4 v){
-  return sqrt(abs(geometryDot(v,v)));
+float sinh(float x){
+  float eX = exp(x);
+  return (0.5 * (eX - 1.0/eX));
 }
 
-vec4 pointOnGeodesic(vec4 u, vec4 vPrime, float dist);
-bool isOutsideCell(vec4 samplePoint, out mat4 fixMatrix);
+float asinh(float x){
+  return log(x + sqrt(x*x+1.0));
+}
 
-//--------------------------------------------------------------------
-// Generalized SDFs
-//--------------------------------------------------------------------
+//-------------------------------------------------------
+// Hyperbolic Functions
+//-------------------------------------------------------
+float hypDot(vec4 u, vec4 v){
+  return u.x*v.x + u.y*v.y + u.z*v.z - u.w*v.w; // hyp Dot
+}
+float hypNorm(vec4 v){
+  return sqrt(abs(hypDot(v,v)));
+}
+vec4 hypNormalize(vec4 u, bool toTangent){
+  return u/hypNorm(u);
+}
+float hypDistance(vec4 u, vec4 v){
+  float bUV = -hypDot(u,v);
+  return acosh(bUV);
+}
 
-float globalSceneSDF(vec4 samplePoint);
-float localSceneSDF(vec4 samplePoint);
+//Given two positions find the unit tangent vector at the first that points to the second
+vec4 hypDirection(vec4 u, vec4 v){
+  vec4 w = v + hypDot(u,v)*u;
+  return hypNormalize(w, true);
+}
+
+//calculate the new direction vector (v) for the continuation of the ray from the new ray origin (u)
+//having moved by fix matrix
+vec4 hypFixDirection(vec4 u, vec4 v, mat4 fixMatrix){
+  return hypDirection(u, v*fixMatrix); 
+}
+
+//-------------------------------------------------------
+//Hyperboloid Functions
+//-------------------------------------------------------
+
+vec4 projectToKlein(vec4 v){
+  return v/v.w;
+}
+
+// Get point at distance dist on the geodesic from u in the direction vPrime
+vec4 pointOnGeodesic(vec4 u, vec4 vPrime, float dist){
+  return u*cosh(dist) + vPrime*sinh(dist);
+}
+
+vec4 tangentVectorOnGeodesic(vec4 u, vec4 vPrime, float dist){
+  // note that this point has hypDot with itself of -1, so it is on other hyperboloid
+  return u*sinh(dist) + vPrime*cosh(dist);
+}
+
+vec4 pointOnGeodesicAtInfinity(vec4 u, vec4 vPrime){ // returns point on the light
+  // cone intersect Klein model corresponding to the point at infinity on the
+  // geodesic through u and v
+  return projectToKlein(u + vPrime);
+}
+
+//---------------------------------------------------------------------
+// Sign Distance Fields
+//---------------------------------------------------------------------
 
 float sphereSDF(vec4 samplePoint, vec4 center, float radius){
-  return geometryDistance(samplePoint, center) - radius;
+  return hypDistance(samplePoint, center) - radius;
 }
 
 float sortOfEllipsoidSDF(vec4 samplePoint, mat4 boostMatrix){
-  return sphereSDF(geometryNormalize(samplePoint * boostMatrix, false), ORIGIN, 0.05);
+  return sphereSDF(hypNormalize(samplePoint * boostMatrix, false), ORIGIN, 0.05);
 }
 
-float controllerSDF(vec4 samplePoint, mat4 controllerBoost, float radius){
-  float sphere = sphereSDF(samplePoint, ORIGIN * controllerBoost, radius);
-  
-  //generated on JS side
-  //may be subject to change
-  //translateByVector(0,0,0.2)*scale matrix (0.8, 0.8, 0.4)
-  mat4 scaleMatrix = mat4(
-    0.8, 0.0, 0.0, 0.0,
-    0.0, 0.8, 0.0, 0.0,
-    0.0, 0.0, 0.408, 0.0805,
-    0.0, 0.0, 0.2013, 1.02
-  );
+// A horosphere can be constructed by offseting from a standard horosphere.
+// Our standard horosphere will have a center in the direction of lightPoint
+// and go through the origin. Negative offsets will 'shrink' it.
+float horosphereHSDF(vec4 samplePoint, vec4 lightPoint, float offset){
+  return log(-hypDot(samplePoint, lightPoint)) - offset;
+}
 
-  //We need to offset this so that the ellipsoid is not centered at the same point as the sphere
-  float ellipsoid = sortOfEllipsoidSDF(samplePoint, scaleMatrix * controllerBoost);
-  return unionSDF(sphere, ellipsoid);
+float localSceneSDF(vec4 samplePoint){
+    float sphere = sphereSDF(samplePoint, ORIGIN, sphereRad);
+    float vertexSphere = horosphereHSDF(abs(samplePoint), idealCubeCornerKlein, horosphereSize);
+    float final = -unionSDF(vertexSphere,sphere);
+    return final;
+}
+
+//GLOBAL OBJECTS SCENE ++++++++++++++++++++++++++++++++++++++++++++++++
+float globalSceneSDF(vec4 samplePoint){
+  vec4 absoluteSamplePoint = samplePoint * cellBoost; // correct for the fact that we have been moving
+  float distance = MAX_DIST;
+  //Light Objects
+  for(int i=0; i<NUM_LIGHTS; i++){
+    float objDist;
+    if(lightIntensities[i].w == 0.0) { objDist = MAX_DIST; }
+    else{
+      objDist = sphereSDF(absoluteSamplePoint, lightPositions[i], 1.0/(10.0*lightIntensities[i].w));
+      distance = min(distance, objDist);
+      if(distance < EPSILON){
+        hitWhich = 1;
+        globalLightColor = lightIntensities[i];
+        return distance;
+      }
+    }
+  }
+  /*Controller Objects
+  for(int i=0; i<2; i++){
+    if(controllerCount != 0){
+      //float objDist = sphereSDF(absoluteSamplePoint, ORIGIN*controllerBoosts[i-4]*currentBoost, 1.0/(10.0 * lightIntensities[i].w));
+      float objDist = controllerSDF(absoluteSamplePoint, controllerBoosts[i-4]*currentBoost, 1.0/(10.0 * lightIntensities[i].w));
+      distance = min(distance, objDist);
+      if(distance < EPSILON){
+        hitWhich = 1;
+        globalLightColor = lightIntensities[i+4];
+        return distance;
+      }
+      if(controllerCount == 1) break;
+    }
+  }*/
+  //Global Objects
+  for(int i=0; i<NUM_OBJECTS; i++) {
+    float objDist;
+    if(length(globalObjectRadii[i]) == 0.0){ objDist = MAX_DIST;}
+    else{
+      if(globalObjectTypes[i] == 0) { objDist = sphereSDF(absoluteSamplePoint, globalObjectBoosts[i][3], globalObjectRadii[i].x); }
+      else if(globalObjectTypes[i] == 1) { objDist = sortOfEllipsoidSDF(absoluteSamplePoint, globalObjectBoosts[i]);}
+      else { objDist = MAX_DIST; }
+      distance = min(distance, objDist);
+      if(distance < EPSILON){
+        hitWhich = 2;
+      }
+    }
+  }
+  return distance;
 }
 
 //--------------------------------------------------------------------
@@ -150,7 +230,7 @@ vec4 texcube(vec4 samplePoint, mat4 toOrigin){
     float k = 4.0;
     vec4 newSP = samplePoint * toOrigin;
     vec3 p = mod(newSP.xyz,1.0);
-    vec3 n = geometryNormalize(N*toOrigin, true).xyz; //Very hacky you are warned
+    vec3 n = hypNormalize(N*toOrigin, true).xyz; //Very hacky you are warned
     vec3 m = pow(abs(n), vec3(k));
     vec4 x = texture2D(texture, p.yz);
     vec4 y = texture2D(texture, p.zx);
@@ -175,17 +255,17 @@ float attenuation(float distToLight, vec4 lightIntensity){
 }
 
 vec3 lightingCalculations(vec4 SP, vec4 TLP, vec4 V, vec3 baseColor, vec4 lightIntensity){
-  float distToLight = geometryDistance(SP, TLP);
+  float distToLight = hypDistance(SP, TLP);
   float att = attenuation(distToLight, lightIntensity);
   //Calculations - Phong Reflection Model
   float shadow = 1.0;
-  vec4 L = geometryDirection(SP, TLP);
-  vec4 R = 2.0*geometryDot(L, N)*N - L;
+  vec4 L = hypDirection(SP, TLP);
+  vec4 R = 2.0*hypDot(L, N)*N - L;
   //Calculate Diffuse Component
-  float nDotL = max(geometryDot(N, L),0.0);
+  float nDotL = max(hypDot(N, L),0.0);
   vec3 diffuse = lightIntensity.rgb * nDotL;
   //Calculate Specular Component
-  float rDotV = max(geometryDot(R, V),0.0);
+  float rDotV = max(hypDot(R, V),0.0);
   vec3 specular = lightIntensity.rgb * pow(rDotV,10.0);
   //Compute final color
   return att*(shadow*((diffuse*baseColor) + specular));
@@ -224,153 +304,26 @@ vec3 phongModel(mat4 invObjectBoost, bool isGlobal, mat4 totalFixMatrix){
       }
     }
     //Lights for Controllers
-    for(int i = 0; i<2; i++){
+   /* for(int i = 0; i<2; i++){
       if(controllerCount == 0) break; //if there are no controllers do nothing
       else translatedLightPosition = ORIGIN*controllerBoosts[i]*currentBoost;
       color += lightingCalculations(samplePoint, translatedLightPosition, V, baseColor, lightIntensities[i+4]);
       if(controllerCount == 1) break; //if there is one controller only do one loop
-    }
+    }*/
     return color;
-}
-
-//-------------------------------------------------------
-// Generalized Functions
-//-------------------------------------------------------
-float geometryDot(vec4 u, vec4 v){
-  return u.x*v.x + u.y*v.y + u.z*v.z - u.w*v.w; // Lorentz Dot
-}
-vec4 geometryNormalize(vec4 u, bool toTangent){
-  return u/geometryNorm(u);
-}
-float geometryDistance(vec4 u, vec4 v){
-  float bUV = -geometryDot(u,v);
-  return acosh(bUV);
-}
-
-//Given two positions find the unit tangent vector at the first that points to the second
-vec4 geometryDirection(vec4 u, vec4 v){
-  vec4 w = v + geometryDot(u,v)*u;
-  return geometryNormalize(w, true);
-}
-
-//calculate the new direction vector (v) for the continuation of the ray from the new ray origin (u)
-//having moved by fix matrix
-vec4 geometryFixDirection(vec4 u, vec4 v, mat4 fixMatrix){
-  return geometryDirection(u, v*fixMatrix); 
-}
-
-//-------------------------------------------------------
-//Hyperbolic Math functions
-//-------------------------------------------------------
-float sinh(float x){
-  float eX = exp(x);
-  return (0.5 * (eX - 1.0/eX));
-}
-float asinh(float x){
-  return log(x + sqrt(x*x+1.0));
-}
-
-//-------------------------------------------------------
-//Hyperboloid Functions
-//-------------------------------------------------------
-
-vec4 projectToKlein(vec4 v){
-  return v/v.w;
-}
-
-// Get point at distance dist on the geodesic from u in the direction vPrime
-vec4 pointOnGeodesic(vec4 u, vec4 vPrime, float dist){
-  return u*cosh(dist) + vPrime*sinh(dist);
-}
-
-vec4 tangentVectorOnGeodesic(vec4 u, vec4 vPrime, float dist){
-  // note that this point has geometryDot with itself of -1, so it is on other hyperboloid
-  return u*sinh(dist) + vPrime*cosh(dist);
-}
-
-vec4 pointOnGeodesicAtInfinity(vec4 u, vec4 vPrime){ // returns point on the light
-  // cone intersect Klein model corresponding to the point at infinity on the
-  // geodesic through u and v
-  return projectToKlein(u + vPrime);
-}
-
-//---------------------------------------------------------------------
-//Raymarch Primitives
-//---------------------------------------------------------------------
-// A horosphere can be constructed by offseting from a standard horosphere.
-// Our standard horosphere will have a center in the direction of lightPoint
-// and go through the origin. Negative offsets will 'shrink' it.
-float horosphereHSDF(vec4 samplePoint, vec4 lightPoint, float offset){
-  return log(-geometryDot(samplePoint, lightPoint)) - offset;
-}
-
-float localSceneSDF(vec4 samplePoint){
-    float sphere = sphereSDF(samplePoint, ORIGIN, sphereRad);
-    float vertexSphere = horosphereHSDF(abs(samplePoint), idealCubeCornerKlein, horosphereSize);
-    float final = -unionSDF(vertexSphere,sphere);
-    return final;
-}
-
-//GLOBAL OBJECTS SCENE ++++++++++++++++++++++++++++++++++++++++++++++++
-float globalSceneSDF(vec4 samplePoint){
-  vec4 absoluteSamplePoint = samplePoint * cellBoost; // correct for the fact that we have been moving
-  float distance = MAX_DIST;
-  //Light Objects
-  for(int i=0; i<NUM_LIGHTS; i++){
-    float objDist;
-    if(lightIntensities[i].w == 0.0) { objDist = MAX_DIST; }
-    else{
-      objDist = sphereSDF(absoluteSamplePoint, lightPositions[i], 1.0/(10.0*lightIntensities[i].w));
-      distance = min(distance, objDist);
-      if(distance < EPSILON){
-        hitWhich = 1;
-        globalLightColor = lightIntensities[i];
-        return distance;
-      }
-    }
-  }
-  //Controller Objects
-  for(int i=0; i<2; i++){
-    if(controllerCount != 0){
-      //float objDist = sphereSDF(absoluteSamplePoint, ORIGIN*controllerBoosts[i-4]*currentBoost, 1.0/(10.0 * lightIntensities[i].w));
-      float objDist = controllerSDF(absoluteSamplePoint, controllerBoosts[i-4]*currentBoost, 1.0/(10.0 * lightIntensities[i].w));
-      distance = min(distance, objDist);
-      if(distance < EPSILON){
-        hitWhich = 1;
-        globalLightColor = lightIntensities[i+4];
-        return distance;
-      }
-      if(controllerCount == 1) break;
-    }
-  }
-  //Global Objects
-  for(int i=0; i<NUM_OBJECTS; i++) {
-    float objDist;
-    if(length(globalObjectRadii[i]) == 0.0){ objDist = MAX_DIST;}
-    else{
-      if(globalObjectTypes[i] == 0) { objDist = sphereSDF(absoluteSamplePoint, globalObjectBoosts[i][3], globalObjectRadii[i].x); }
-      else if(globalObjectTypes[i] == 1) { objDist = sortOfEllipsoidSDF(absoluteSamplePoint, globalObjectBoosts[i]);}
-      else { objDist = MAX_DIST; }
-      distance = min(distance, objDist);
-      if(distance < EPSILON){
-        hitWhich = 2;
-      }
-    }
-  }
-  return distance;
 }
 
 //NORMAL FUNCTIONS ++++++++++++++++++++++++++++++++++++++++++++++++++++
 vec4 estimateNormal(vec4 p) { // normal vector is in tangent hyperplane to hyperboloid at p
     // float denom = sqrt(1.0 + p.x*p.x + p.y*p.y + p.z*p.z);  // first, find basis for that tangent hyperplane
     float newEp = EPSILON * 10.0;
-    vec4 basis_x = geometryNormalize(vec4(p.w,0.0,0.0,p.x), true);  // dw/dx = x/w on hyperboloid
+    vec4 basis_x = hypNormalize(vec4(p.w,0.0,0.0,p.x), true);  // dw/dx = x/w on hyperboloid
     vec4 basis_y = vec4(0.0,p.w,0.0,p.y);  // dw/dy = y/denom
     vec4 basis_z = vec4(0.0,0.0,p.w,p.z);  // dw/dz = z/denom  /// note that these are not orthonormal!
-    basis_y = geometryNormalize(basis_y - geometryDot(basis_y, basis_x)*basis_x, true); // need to Gram Schmidt
-    basis_z = geometryNormalize(basis_z - geometryDot(basis_z, basis_x)*basis_x - geometryDot(basis_z, basis_y)*basis_y, true);
+    basis_y = hypNormalize(basis_y - hypDot(basis_y, basis_x)*basis_x, true); // need to Gram Schmidt
+    basis_z = hypNormalize(basis_z - hypDot(basis_z, basis_x)*basis_x - hypDot(basis_z, basis_y)*basis_y, true);
     if(hitWhich != 3){ //global light scene
-        return geometryNormalize( //p+EPSILON*basis_x should be lorentz normalized however it is close enough to be good enough
+        return hypNormalize( //p+EPSILON*basis_x should be lorentz normalized however it is close enough to be good enough
             basis_x * (globalSceneSDF(p + newEp*basis_x) - globalSceneSDF(p - newEp*basis_x)) +
             basis_y * (globalSceneSDF(p + newEp*basis_y) - globalSceneSDF(p - newEp*basis_y)) +
             basis_z * (globalSceneSDF(p + newEp*basis_z) - globalSceneSDF(p - newEp*basis_z)),
@@ -378,7 +331,7 @@ vec4 estimateNormal(vec4 p) { // normal vector is in tangent hyperplane to hyper
         );
     }
     else{ //local scene
-        return geometryNormalize(
+        return hypNormalize(
             basis_x * (localSceneSDF(p + newEp*basis_x) - localSceneSDF(p - newEp*basis_x)) +
             basis_y * (localSceneSDF(p + newEp*basis_y) - localSceneSDF(p - newEp*basis_y)) +
             basis_z * (localSceneSDF(p + newEp*basis_z) - localSceneSDF(p - newEp*basis_z)),
@@ -394,8 +347,8 @@ vec4 getRayPoint(vec2 resolution, vec2 fragCoord, bool isLeft){ //creates a poin
     }
     vec2 xy = 0.2*((fragCoord - 0.5*resolution)/resolution.x);
     float z = 0.1/tan(radians(fov*0.5));
-    vec4 p =  geometryNormalize(vec4(xy,-z,1.0), false);
-    return p;
+    vec4 p =  hypNormalize(vec4(xy,-z,1.0), false);
+    return vec4(xy,-z,1.0);
 }
 
 // This function is intended to be geometry-agnostic.
@@ -446,8 +399,8 @@ void raymarch(vec4 rO, vec4 rD, out mat4 totalFixMatrix){
         vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
         if(isOutsideCell(localEndPoint, fixMatrix)){
             totalFixMatrix *= fixMatrix;
-            localrO = geometryNormalize(localEndPoint*fixMatrix, false);
-            localrD = geometryFixDirection(localrO, localrD, fixMatrix); 
+            localrO = hypNormalize(localEndPoint*fixMatrix, false);
+            localrD = hypFixDirection(localrO, localrD, fixMatrix); 
             localDepth = MIN_DIST;
         }
         else{
@@ -494,7 +447,7 @@ void main(){
     //stereo translations ----------------------------------------------------
     bool isLeft = gl_FragCoord.x/screenResolution.x <= 0.5;
     vec4 rayDirV = getRayPoint(screenResolution, gl_FragCoord.xy, isLeft);
-    if(isStereo == 1){
+    /*if(isStereo == 1){
         if(isLeft){
             rayOrigin *= stereoBoosts[0];
             rayDirV *= stereoBoosts[0];
@@ -503,24 +456,26 @@ void main(){
             rayOrigin *= stereoBoosts[1];
             rayDirV *= stereoBoosts[1];
         }
-    }
+    }*/
 
     //camera position must be translated in hyperboloid -----------------------
     rayOrigin *= currentBoost;
     rayDirV *= currentBoost;
     //generate direction then transform to hyperboloid ------------------------
-    vec4 rayDirVPrime = geometryDirection(rayOrigin, rayDirV);
+    //vec4 rayDirVPrime = hypDirection(rayOrigin, rayDirV);
     //get our raymarched distance back ------------------------
-    mat4 totalFixMatrix = mat4(1.0);
-    raymarch(rayOrigin, rayDirVPrime, totalFixMatrix);
-
+   // mat4 totalFixMatrix = mat4(1.0);
+    //raymarch(rayOrigin, rayDirVPrime, totalFixMatrix);
+    //gl_FragColor = vec4(0.5,0.0,0.0,1.0);
     //Based on hitWhich decide whether we hit a global object, local object, or nothing
-    if(hitWhich == 0){ //Didn't hit anything ------------------------
-        gl_FragColor = vec4(0.0);
+    gl_FragColor = rayDirV;
+    /*if(hitWhich == 0){ //Didn't hit anything ------------------------
+        gl_FragColor = vec4(0.1);
         return;
     }
     else if(hitWhich == 1){ // global lights
         gl_FragColor = vec4(globalLightColor.rgb, 1.0);
+        //gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
         return;
     }
     else{ // objects
@@ -531,7 +486,7 @@ void main(){
       }else{ // local objects
         color = phongModel(mat4(1.0), false, totalFixMatrix);
       }
-    gl_FragColor = vec4(color, 1.0);
-  }
+      gl_FragColor = vec4(color, 1.0);
+    }*/
 }
 END FRAGMENT

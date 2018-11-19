@@ -7,7 +7,6 @@ var g_virtCamera;
 var g_material;
 var g_controls;
 var g_geometry;
-var g_rotation;
 var g_currentBoost;
 var g_stereoBoosts = [];
 var g_leftCurrentBoost;
@@ -23,11 +22,6 @@ var g_composer;
 //-------------------------------------------------------
 // Scene Variables
 //-------------------------------------------------------
-var scene;
-var renderer;
-var camera;
-var mesh;
-var geom;
 var maxSteps = 50;
 var textFPS;
 var time;
@@ -158,6 +152,47 @@ var initObjects = function(g){
 }
 
 //-------------------------------------------------------
+// Sets up  our raymarch shader pass
+//-------------------------------------------------------
+var raymarchPass = function(){
+  var pass = new THREE.ShaderPass(THREE.hyper);
+  
+  //Our massive list of uniforms
+  pass.uniforms.isStereo.value = 0;
+  pass.uniforms.screenResolution.value = g_screenResolution;
+  pass.uniforms.invGenerators.value = invGens;
+  pass.uniforms.currentBoost.value = g_currentBoost;
+  pass.uniforms.stereoBoosts.value = g_stereoBoosts; // need to make array with leftCurrentBoost and right
+  pass.uniforms.cellBoost.value = g_cellBoost;
+  pass.uniforms.invCellBoost.value = g_invCellBoost;
+  pass.uniforms.maxSteps.value = maxSteps;
+  pass.uniforms.lightPositions.value = lightPositions;
+  pass.uniforms.lightIntensities.value = lightIntensities;
+  pass.uniforms.attnModel.value = attnModel;
+  pass.uniforms.texture.value = new THREE.TextureLoader().load("images/concrete2.png");
+  //pass.uniforms.controllerCount.value = 0;
+  //pass.uniforms.controllerBoosts.value = g_controllerBoosts;
+  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+  pass.uniforms.invGlobalObjectBoosts.value = invGlobalObjectBoosts;
+  pass.uniforms.globalObjectRadii.value = globalObjectRadii;
+  pass.uniforms.globalObjectTypes.value = globalObjectTypes;
+  //pass.uniforms.halfCubeDualPoints.value = hCDP;
+  pass.uniforms.halfCubeWidthKlein.value = hCWK;
+  pass.uniforms.cut4.value = g_cut4;
+  pass.uniforms.sphereRad.value = g_sphereRad;
+  pass.uniforms.horosphereSize.value = g_horosphereSize;
+  //pass.uniforms.planeOffset.value = g_planeOffset;
+  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+
+  //Our list of defines
+  //currently set as constant values is in the shader for easier debugging
+ // pass.defines.NUM_LIGHTS.value = lightPositions.length;
+ // pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
+  return pass;
+}
+
+
+//-------------------------------------------------------
 // Sets up the scene
 //-------------------------------------------------------
 var init = function(){
@@ -165,13 +200,14 @@ var init = function(){
 	time = Date.now();
 	textFPS = document.getElementById('fps');
   g_renderer = new THREE.WebGLRenderer();
-  document.body.appendChild(g_renderer.domElement);
+
   g_screenResolution = new THREE.Vector2(window.innerWidth, window.innerHeight);
-  g_effect = new THREE.VREffect(g_renderer);
+  g_renderer.setSize(g_screenResolution.x, g_screenResolution.y);
+  document.body.appendChild(g_renderer.domElement);
+
   g_controls = new THREE.Controls();
-  g_rotation = new THREE.Quaternion();
-  g_controllerBoosts.push(new THREE.Matrix4());
-  g_controllerBoosts.push(new THREE.Matrix4());
+  g_effect = new THREE.VREffect();
+  g_controllerBoosts.push(new THREE.Matrix4()); g_controllerBoosts.push(new THREE.Matrix4());
   g_currentBoost = new THREE.Matrix4(); // boost for camera relative to central cell
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
@@ -193,51 +229,20 @@ var init = function(){
   
   //Shader Passes *****************************************
   //Raymarch
-  g_raymarch = raymarchPass(g_screenResolution);
-  g_composer.addPass(g_raymarch);
-  g_raymarch.renderToScreen = true;
-    
+  //g_raymarch = raymarchPass();
+  //g_composer.addPass(g_raymarch);
+  //g_raymarch.renderToScreen = true;
+  var test = new THREE.ShaderPass(THREE.test);
+  test.uniforms.isStereo.value = 0;
+  test.uniforms.screenResolution.value = g_screenResolution;
+  test.uniforms.currentBoost.value = g_currentBoost;
+  g_composer.addPass(test);
+  test.renderToScreen = true;
+
   //Generator for controllerScaleMatrix on the glsl side
   //console.log(translateByVector(g_geometry, new THREE.Vector3(0,0,0.2)).multiply(scaleMatrix));
   
   animate();
-}
-
-var raymarchPass = function(screenRes){
-  var pass = new THREE.ShaderPass(THREE.hyper);
-  
-  //Our massive list of uniforms
-  pass.uniforms.isStereo.value = g_vr;
-  pass.uniforms.screenResolution.value = screenRes;
-  pass.uniforms.invGenerators.value = invGens;
-  pass.uniforms.currentBoost.value = g_currentBoost;
-  pass.uniforms.stereoBoosts.value = g_stereoBoosts; // need to make array with leftCurrentBoost and right
-  pass.uniforms.cellBoost.value = g_cellBoost;
-  pass.uniforms.invCellBoost.value = g_invCellBoost;
-  pass.uniforms.maxSteps.value = maxSteps;
-  pass.uniforms.lightPositions.value = lightPositions;
-  pass.uniforms.lightIntensities.value = lightIntensities;
-  pass.uniforms.attnModel.value = attnModel;
-  pass.uniforms.texture.value = new THREE.TextureLoader().load("images/concrete2.png");
-  pass.uniforms.controllerCount.value = 0;
-  pass.uniforms.controllerBoosts.value = g_controllerBoosts;
-  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
-  pass.uniforms.invGlobalObjectBoosts.value = invGlobalObjectBoosts;
-  pass.uniforms.globalObjectRadii.value = globalObjectRadii;
-  pass.uniforms.globalObjectTypes.value = globalObjectTypes;
-  pass.uniforms.halfCubeDualPoints.value = hCDP;
-  pass.uniforms.halfCubeWidthKlein.value = hCWK;
-  pass.uniforms.cut4.value = g_cut4;
-  pass.uniforms.sphereRad.value = g_sphereRad;
-  pass.uniforms.tubeRad.value = g_tubeRad;
-  pass.uniforms.horosphereSize.value = g_horosphereSize;
-  pass.uniforms.planeOffset.value = g_planeOffset;
-  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
-
-  //Our list of defines
- // pass.defines.NUM_LIGHTS.value = lightPositions.length;
- // pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
-  return pass;
 }
 
 //-------------------------------------------------------
@@ -247,9 +252,9 @@ var animate = function(){
   requestAnimationFrame(animate);
   g_controls.update();
   maxSteps = calcMaxSteps(fps.getFPS(), maxSteps);
-  THREE.VRController.update();
-  g_raymarch.uniforms.maxSteps.value = maxSteps;
-  g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
+  //THREE.VRController.update();
+  //g_raymarch.uniforms.maxSteps.value = maxSteps;
+  //g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
   g_composer.render();
 }
 

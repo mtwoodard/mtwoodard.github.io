@@ -115,7 +115,6 @@ THREE.Controls = function(done){
                                                     this.manualRotateRate[2] * speed * deltaTime, 1.0);
         deltaRotation.normalize();
         if(deltaRotation !== undefined){
-            g_rotation.multiply(deltaRotation);
             m = new THREE.Matrix4().makeRotationFromQuaternion(deltaRotation.inverse());
             g_currentBoost.premultiply(m);
         }

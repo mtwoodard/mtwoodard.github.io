@@ -22,10 +22,8 @@
  * https://drive.google.com/folderview?id=0BzudLt22BqGRbW9WTHMtOWMzNjQ&usp=sharing#list
  *
  */
-THREE.VREffect = function ( renderer, done ) {
+THREE.VREffect = function ( done ) {
 	// var frameData = new VRFrameData();
-
-	this._renderer = renderer;
 
 	this._init = function() {
 		var self = this;
@@ -121,86 +119,6 @@ THREE.VREffect = function ( renderer, done ) {
 	};
 
 	this._init();
-
-	var iconHidden = true;
-	var fixLeaveStereo = false;
-
-	this.render = function ( scene, camera, animate ) {
-		var renderer = this._renderer;
-		var vrHMD = this._vrHMD;
-		renderer.setScissorTest( false );
-		// VR render mode if HMD is available
-		if ( vrHMD ) {
-			vrHMD.requestAnimationFrame(animate);
-			this.renderStereo.apply( this, [scene, camera] );
-			if (vrHMD.submitFrame !== undefined && this._vrMode) {
-				// vrHMD.getAnimationFrame(frameData);
-				vrHMD.submitFrame();
-			}
-			return;
-		}
-
-		requestAnimationFrame(animate);
-		if (iconHidden && this.phoneVR.orientationIsAvailable()) {
-			iconHidden = false;
-			document.getElementById("vr-icon").style.display = "block";
-		}
-
-		if ( this.phoneVR.isVRMode === true && this.phoneVR.orientationIsAvailable()) { //default to stereo render for devices with orientation sensor, like mobile
-			this.renderStereo.apply( this, [scene, camera] );
-			return;
-		}
-
-		if ( guiInfo.toggleStereo ) { //change this to true to debug stereo render
-			fixLeaveStereo = true;
-			this.renderStereo.apply( this, [scene, camera] );
-			return;
-		}
-
-		if(fixLeaveStereo && !guiInfo.toggleStereo){
-			fixLeaveStereo = false;
-			var size = renderer.getSize();
-			renderer.setScissorTest(false);
-			renderer.clear();
-			renderer.setViewport(0,0,size.width, size.height);
-		}
-
-		// Regular render mode if not HMD
-		g_raymarch.uniforms.isStereo.value = 0;
-		renderer.render.apply( this._renderer, [scene, camera]  );
-	};
-
-	this.renderStereo = function( scene, camera, renderTarget, forceClear ) {
-		var renderer = this._renderer;
-		var size = renderer.getSize();
-		var rendererWidth = size.width;
-		var rendererHeight = size.height;
-		var eyeDivisionLine = rendererWidth / 2;
-
-		renderer.setScissorTest( true );
-		renderer.clear();
-
-		if ( camera.parent === null ) {
-			camera.updateMatrixWorld();
-		}
-
-		// render left eye
-		g_material.uniforms.isStereo.value = -1;
-		renderer.setViewport( 0, 0, eyeDivisionLine, rendererHeight );
-		renderer.setScissor( 0, 0, eyeDivisionLine, rendererHeight );
-		renderer.render( scene, camera );
-
-		//render right eye
-		g_material.uniforms.isStereo.value = 1;
-		renderer.setViewport( eyeDivisionLine, 0, eyeDivisionLine, rendererHeight );
-		renderer.setScissor( eyeDivisionLine, 0, eyeDivisionLine, rendererHeight );
-		renderer.render( scene, camera );
-
-	};
-
-	this.setSize = function( width, height ) {
-		renderer.setSize( width, height );
-	};
 
 	var _vrMode = false;
 	this.toggleVRMode = function () {
