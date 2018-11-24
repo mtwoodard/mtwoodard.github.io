@@ -4,9 +4,9 @@
 var g_cut4 = 2;
 var g_sphereRad = 0.996216;
 var g_tubeRad = 0.15;
-var g_horosphereSize = -0.951621;
-var g_planeOffset = 0.75;
-var g_targetFPS = {value:27.5};
+var g_vertexPosition = idealCubeCornerKlein;
+var g_vertexSurfaceOffset = -0.951621;
+ var g_targetFPS = {value:27.5};
 
 //-------------------------------------------------------
 // UI Variables
@@ -62,7 +62,8 @@ function updateUniformsFromUI()
 	// Get the number of cubes around each edge.
 	var r = guiInfo.edgeCase;
 	var p = 4, q = 3;
-	var g = GetGeometry( p, q, r );
+  var g = GetGeometry( p, q, r );
+  var isCubical = p == 4 && q == 3;
 
 	// Check to see if the geometry has changed.
 	// If so, update the shader.
@@ -70,8 +71,8 @@ function updateUniformsFromUI()
 	{
 		g_geometry = g;
     var geoFrag = getGeometryFrag();
-    g_material.needsUpdate = true;
-    g_material.fragmentShader = globalsFrag.concat(geoFrag).concat(scenesFrag[guiInfo.sceneIndex]).concat(mainFrag);
+    g_raymarch.needsUpdate = true;
+   // g_raymarch.fragmentShader = globalsFrag.concat(geoFrag).concat(scenesFrag[guiInfo.sceneIndex]).concat(mainFrag);
     guiInfo.resetPosition();
 	}
 
@@ -106,25 +107,47 @@ function updateUniformsFromUI()
 	// horosphereSize
 	var midEdgeDir = new THREE.Vector3(Math.cos(Math.PI / 4), Math.cos(Math.PI / 4), 1);
 	var midEdge = constructHyperboloidPoint(midEdgeDir, g_sphereRad);
-	var distToMidEdge = horosphereHSDF(midEdge, idealCubeCornerKlein, -g_sphereRad);
-	g_horosphereSize = -(g_sphereRad - distToMidEdge);
+  
+  switch( g_cut4 )
+  {
+  case Geometry.Spherical:
+    var distToMidEdge = midEdge.geometryDistance(g_geometry, g_vertexPosition);
+    g_vertexSurfaceOffset = distToMidEdge;
+    break;
 
-	// planeOffset
-	var dualPoint = new THREE.Vector4(hCWK, hCWK, hCWK, 1.0).geometryNormalize(g_geometry);
-	var distToMidEdge = geodesicPlaneHSDF(midEdge, dualPoint, 0);
-	g_planeOffset = distToMidEdge;
+  case Geometry.Euclidean:
+    var distToMidEdge = horosphereHSDF(midEdge, idealCubeCornerKlein, -g_sphereRad);
+    g_vertexPosition = idealCubeCornerKlein;
+    g_vertexSurfaceOffset = -(g_sphereRad - distToMidEdge);
+    break;
 
-  initValues(g_geometry);
-  g_material.uniforms.geometry.value = g;
-	g_material.uniforms.invGenerators.value = invGens;
-	g_material.uniforms.halfCubeDualPoints.value = hCDP;
-  g_material.uniforms.halfCubeWidthKlein.value = hCWK;
-	g_material.uniforms.cut4.value = g_cut4;
-	g_material.uniforms.sphereRad.value = g_sphereRad;
-	g_material.uniforms.tubeRad.value = g_tubeRad;
-	g_material.uniforms.horosphereSize.value = g_horosphereSize;
-	g_material.uniforms.planeOffset.value = g_planeOffset;
-	g_material.uniforms.attnModel.value = guiInfo.falloffModel;
+  case Geometry.Hyperbolic:
+    g_vertexSurfaceOffset = geodesicPlaneHSDF(midEdge, g_vertexPosition, 0);
+    break;
+  }
+
+  initGenerators(p,q,r);
+  initLights(g_geometry);
+  g_raymarch.uniforms.lightPositions.value = lightPositions;
+  g_raymarch.uniforms.lightIntensities.value = lightIntensities;
+  initObjects(g_geometry);
+  g_raymarch.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+  g_raymarch.uniforms.invGlobalObjectBoosts.value = invGlobalObjectBoosts;
+  g_raymarch.uniforms.globalObjectRadii.value = globalObjectRadii;
+  g_raymarch.uniforms.globalObjectTypes.value = globalObjectTypes;
+
+  g_raymarch.uniforms.geometry.value = g;
+	g_raymarch.uniforms.invGenerators.value = invGens;
+	g_raymarch.uniforms.halfCubeDualPoints.value = hCDP;
+  g_raymarch.uniforms.halfCubeWidthKlein.value = hCWK;
+	g_raymarch.uniforms.cut4.value = g_cut4;
+	g_raymarch.uniforms.sphereRad.value = g_sphereRad;
+	g_raymarch.uniforms.tubeRad.value = g_tubeRad;
+  g_raymarch.uniforms.vertexPosition.value = g_vertexPosition;
+  g_raymarch.uniforms.vertexSurfaceOffset.value = g_vertexSurfaceOffset;
+  g_raymarch.uniforms.attnModel.value = guiInfo.falloffModel;
+  g_raymarch.uniforms.useSimplex.value = !isCubical;
+  g_raymarch.uniforms.simplexMirrorsKlein.value = simplexMirrors;
 }
 
 //What we need to init our dat GUI
@@ -170,8 +193,7 @@ var initGui = function(){
   });
 
   fovController.onChange(function(value){
-    g_virtCamera.fov = value;
-    g_material.uniforms.fov.value = value;
+    g_raymarch.uniforms.fov.value = value;
   });
 
   debugUIController.onFinishChange(function(value){
@@ -205,11 +227,15 @@ var initGui = function(){
     var crosshairRight = document.getElementById("crosshairRight");
     if(guiInfo.toggleUI){
       if(value){
+        g_raymarch.uniforms.isStereo.value = 1;
         crosshairLeft.style.visibility = 'visible';
         crosshairRight.style.visibility = 'visible';
         crosshair.style.visibility = 'hidden';
       }
       else{
+        g_raymarch.uniforms.isStereo.value = 0;
+        g_raymarch.uniforms.screenResolution.value.x = window.innerWidth;
+        g_raymarch.uniforms.screenResolution.value.y = window.innerHeight;
         crosshairLeft.style.visibility = 'hidden';
         crosshairRight.style.visibility = 'hidden';
         crosshair.style.visibility = 'visible';
@@ -227,7 +253,6 @@ var initGui = function(){
 
   sceneController.onFinishChange(function(index){
 	  var geoFrag = getGeometryFrag();
-    g_material.needsUpdate = true;
-    g_material.fragmentShader = globalsFrag.concat(geoFrag).concat(scenesFrag[index]).concat(mainFrag);
+    g_raymarch.needsUpdate = true;
   });
 }

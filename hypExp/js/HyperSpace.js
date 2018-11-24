@@ -3,8 +3,6 @@
 //-------------------------------------------------------
 var g_renderer;
 var g_effect;
-var g_virtCamera;
-var g_material;
 var g_controls;
 var g_geometry;
 var g_currentBoost;
@@ -88,21 +86,49 @@ var hCWK = 0.5773502692;
 var gens;
 var invGens;
 var hCDP = [];
+var simplexMirrors = [];
 
-var initValues = function(g){
-	g_geometry = g;
-	var invHCWK = 1.0/hCWK;
-	hCDP[0] = new THREE.Vector4(invHCWK,0.0,0.0,1.0).geometryNormalize(g_geometry);
-	hCDP[1] = new THREE.Vector4(0.0,invHCWK,0.0,1.0).geometryNormalize(g_geometry);
-	hCDP[2] = new THREE.Vector4(0.0,0.0,invHCWK,1.0).geometryNormalize(g_geometry);
-	gens = createGenerators(g_geometry);
-  invGens = invGenerators(gens);
+var initGenerators = function( p, q, r ){
+  g_geometry = GetGeometry( p, q, r );
+  var isCubical = p == 4 && q == 3;
+
+  if( isCubical )
+  {
+    var invHCWK = 1.0/hCWK;
+    
+    hCDP[0] = new THREE.Vector4(invHCWK,0.0,0.0,1.0);
+    hCDP[1] = new THREE.Vector4(0.0,invHCWK,0.0,1.0);
+    hCDP[2] = new THREE.Vector4(0.0,0.0,invHCWK,1.0);
+    if( g_geometry != Geometry.Euclidean ) {
+      for( var i=0; i<3; i++ )
+        hCDP[i].geometryNormalize(g_geometry);
+    }
+
+    gens = createCubeGenerators(g_geometry);
+    invGens = invCubeGenerators(gens);
+
+    simplexMirrors = [];
+    for(var i = 0; i<4; i++){
+      simplexMirrors.push(new THREE.Vector4());
+    }
+  }
+  else
+  {
+    simplexMirrors = SimplexFacetsKlein( p, q, r );
+    invGens = SimplexInverseGenerators( p, q, r );
+
+    // invGens needs to be length-6;
+    for(var i = 0; i<2; i++){
+      invGens.push(translateByVector(g_geometry, new THREE.Vector3(0.0,0.0,0.0)));
+    }
+  }
+
   for(var i = 0; i<6; i++){
     g_controllerDualPoints.push(new THREE.Vector4());
   }
 }
 
-var createGenerators = function(g){
+var createCubeGenerators = function(g){
   var gen0 = translateByVector(g, new THREE.Vector3(2.0*hCWH,0.0,0.0));
   var gen1 = translateByVector(g, new THREE.Vector3(-2.0*hCWH,0.0,0.0));
   var gen2 = translateByVector(g, new THREE.Vector3(0.0,2.0*hCWH,0.0));
@@ -112,7 +138,7 @@ var createGenerators = function(g){
   return [gen0, gen1, gen2, gen3, gen4, gen5];
 }
 
-var invGenerators = function(genArr){
+var invCubeGenerators = function(genArr){
   return [genArr[1],genArr[0],genArr[3],genArr[2],genArr[5],genArr[4]];
 }
 
@@ -124,11 +150,13 @@ var lightPositions = [];
 var lightIntensities = [];
 var attnModel = 1;
 
-var initLights = function(){
-  PointLightObject(new THREE.Vector3(0,0,1), new THREE.Vector4(0,0,1,1));
-  PointLightObject(new THREE.Vector3(1.2,0,0), new THREE.Vector4(1,0,0,1));
-  PointLightObject(new THREE.Vector3(0,1.1,0), new THREE.Vector4(0,1,0,1));
-  PointLightObject(new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
+var initLights = function(g){
+  lightPositions = [];
+  lightIntensities = [];
+  PointLightObject(g, new THREE.Vector3(0,0,1), new THREE.Vector4(0,0,1,1));
+  PointLightObject(g, new THREE.Vector3(1.2,0,0), new THREE.Vector4(1,0,0,1));
+  PointLightObject(g, new THREE.Vector3(0,1.1,0), new THREE.Vector4(0,1,0,1));
+  PointLightObject(g, new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
   //Add light info for controllers
   lightIntensities.push(new THREE.Vector4(0.49, 0.28, 1.0, 2));
   lightIntensities.push(new THREE.Vector4(1.0, 0.404, 0.19, 2));
@@ -144,7 +172,11 @@ var globalObjectTypes = [];
 
 //TODO: CREATE GLOBAL OBJECT CONSTRUCTORS
 var initObjects = function(g){
-  SphereObject(g, new THREE.Vector3(-0.5,0,0), 0.2); // geometry, position, radius/radii
+  globalObjectBoosts = [];
+  invGlobalObjectBoosts = [];
+  globalObjectRadii = [];
+  globalObjectTypes = [];
+  SphereObject(g, new THREE.Vector3(0.5,0,0), 0.2); // geometry, position, radius/radii
   EllipsoidObject(g, new THREE.Vector3(-0.5,0,0), new THREE.Vector3(1.0,0.7,0.5)); //radii must be less than one!
   for(var i = 2; i<4; i++){ // We need to fill out our arrays with empty objects for glsl to be happy
     EmptyObject();
@@ -158,7 +190,8 @@ var raymarchPass = function(){
   var pass = new THREE.ShaderPass(THREE.hyper);
   
   //Our massive list of uniforms
-  pass.uniforms.isStereo.value = 0;
+  pass.uniforms.isStereo.value = g_vr;
+  pass.uniforms.geometry.value = 3;
   pass.uniforms.screenResolution.value = g_screenResolution;
   pass.uniforms.fov.value = guiInfo.fov;
   pass.uniforms.invGenerators.value = invGens;
@@ -171,19 +204,21 @@ var raymarchPass = function(){
   pass.uniforms.lightIntensities.value = lightIntensities;
   pass.uniforms.attnModel.value = attnModel;
   pass.uniforms.texture.value = new THREE.TextureLoader().load("images/concrete2.png");
-  //pass.uniforms.controllerCount.value = 0;
-  //pass.uniforms.controllerBoosts.value = g_controllerBoosts;
+  pass.uniforms.controllerCount.value = 0;
+  pass.uniforms.controllerBoosts.value = g_controllerBoosts;
   pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
   pass.uniforms.invGlobalObjectBoosts.value = invGlobalObjectBoosts;
   pass.uniforms.globalObjectRadii.value = globalObjectRadii;
   pass.uniforms.globalObjectTypes.value = globalObjectTypes;
-  //pass.uniforms.halfCubeDualPoints.value = hCDP;
+  pass.uniforms.halfCubeDualPoints.value = hCDP;
   pass.uniforms.halfCubeWidthKlein.value = hCWK;
   pass.uniforms.cut4.value = g_cut4;
   pass.uniforms.sphereRad.value = g_sphereRad;
-  pass.uniforms.horosphereSize.value = g_horosphereSize;
-  //pass.uniforms.planeOffset.value = g_planeOffset;
-  pass.uniforms.globalObjectBoosts.value = globalObjectBoosts;
+  pass.uniforms.tubeRad.value = g_tubeRad;
+  pass.uniforms.vertexPosition.value = g_vertexPosition;
+  pass.uniforms.vertexSurfaceOffset.value = g_vertexSurfaceOffset;
+  pass.uniforms.useSimplex.value = false;
+  pass.uniforms.simplexMirrorsKlein.value = simplexMirrors;
 
   //Our list of defines
   //currently set as constant values is in the shader for easier debugging
@@ -213,8 +248,8 @@ var init = function(){
   g_cellBoost = new THREE.Matrix4(); // boost for the cell that we are in relative to where we started
   g_invCellBoost = new THREE.Matrix4();
   g_geometry = Geometry.Hyperbolic; // we start off hyperbolic
-	initValues(g_geometry);
-  initLights();
+  initGenerators(4,3,6);
+  initLights(g_geometry);
   initObjects(g_geometry);
   //Setup dat GUI --- UI.js
   initGui();
@@ -225,20 +260,16 @@ var init = function(){
   //                     can just use post processed effects
   //-------------------------------------------------------
   
-  //Composer **********************************************
+  //Composer 
+  //**********************************************
   g_composer = new THREE.EffectComposer(g_renderer);
   
-  //Shader Passes *****************************************
+  //Shader Passes 
+  //**********************************************
   //Raymarch
   g_raymarch = raymarchPass();
   g_composer.addPass(g_raymarch);
   g_raymarch.renderToScreen = true;
-  /*var test = new THREE.ShaderPass(THREE.test);
-  test.uniforms.isStereo.value = 0;
-  test.uniforms.screenResolution.value = g_screenResolution;
-  test.uniforms.currentBoost.value = g_currentBoost;
-  g_composer.addPass(test);
-  test.renderToScreen = true;*/
 
   //Generator for controllerScaleMatrix on the glsl side
   //console.log(translateByVector(g_geometry, new THREE.Vector3(0,0,0.2)).multiply(scaleMatrix));
@@ -254,8 +285,8 @@ var animate = function(){
   g_controls.update();
   maxSteps = calcMaxSteps(fps.getFPS(), maxSteps);
   //THREE.VRController.update();
-  //g_raymarch.uniforms.maxSteps.value = maxSteps;
-  //g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
+  g_raymarch.uniforms.maxSteps.value = maxSteps;
+  g_raymarch.uniforms.controllerCount.value = THREE.VRController.controllers.length;
   g_composer.render();
 }
 

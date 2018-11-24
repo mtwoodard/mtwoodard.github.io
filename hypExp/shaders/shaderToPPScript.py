@@ -48,6 +48,9 @@ def parseUniformInfo(line):
     elif line.find('int') >= 0:
         typed = 'i'
         value = '0'
+    elif line.find('bool') >= 0:
+        typed = 'b'
+        value = 'false'
     elif line.find('sampler2D') >= 0:
         typed = 't'
         value = 'null'
