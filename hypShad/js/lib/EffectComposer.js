@@ -66,10 +66,6 @@ Object.assign( THREE.EffectComposer.prototype, {
 		pass.setSize( size.width, size.height );
 
 	},
-	
-	changeRaymarchScene: function (pass) {
-		this.passes[0] = pass;
-	},
 
 	insertPass: function ( pass, index ) {
 
@@ -80,51 +76,31 @@ Object.assign( THREE.EffectComposer.prototype, {
 	render: function ( delta ) {
 
 		var maskActive = false;
-
 		var pass, i, il = this.passes.length;
 
 		for ( i = 0; i < il; i ++ ) {
-
 			pass = this.passes[ i ];
-
 			if ( pass.enabled === false ) continue;
-
 			pass.render( this.renderer, this.writeBuffer, this.readBuffer, delta, maskActive );
 
 			if ( pass.needsSwap ) {
-
 				if ( maskActive ) {
-
 					var context = this.renderer.context;
-
 					context.stencilFunc( context.NOTEQUAL, 1, 0xffffffff );
-
 					this.copyPass.render( this.renderer, this.writeBuffer, this.readBuffer, delta );
-
 					context.stencilFunc( context.EQUAL, 1, 0xffffffff );
-
 				}
-
 				this.swapBuffers();
-
 			}
 
 			if ( THREE.MaskPass !== undefined ) {
-
 				if ( pass instanceof THREE.MaskPass ) {
-
 					maskActive = true;
-
 				} else if ( pass instanceof THREE.ClearMaskPass ) {
-
 					maskActive = false;
-
 				}
-
 			}
-
 		}
-
 	},
 
 	reset: function ( renderTarget ) {

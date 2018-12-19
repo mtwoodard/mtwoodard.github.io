@@ -176,7 +176,7 @@ var initObjects = function(g){
   invGlobalObjectBoosts = [];
   globalObjectRadii = [];
   globalObjectTypes = [];
-  SphereObject(g, new THREE.Vector3(0.5,0,0), 0.2); // geometry, position, radius/radii
+  SphereObject(g, new THREE.Vector3(-0.5,0,0), 0.2); // geometry, position, radius/radii
   EllipsoidObject(g, new THREE.Vector3(-0.5,0,0), new THREE.Vector3(1.0,0.7,0.5)); //radii must be less than one!
   for(var i = 2; i<4; i++){ // We need to fill out our arrays with empty objects for glsl to be happy
     EmptyObject();
@@ -186,8 +186,8 @@ var initObjects = function(g){
 //-------------------------------------------------------
 // Sets up  our raymarch shader pass
 //-------------------------------------------------------
-var raymarchPass = function(){
-  var pass = new THREE.ShaderPass(THREE.hyper);
+var raymarchPass = function(passType){
+  var pass = new THREE.ShaderPass(passType);
   
   //Our massive list of uniforms
   pass.uniforms.isStereo.value = g_vr;
@@ -221,9 +221,11 @@ var raymarchPass = function(){
   pass.uniforms.simplexMirrorsKlein.value = simplexMirrors;
 
   //Our list of defines
-  //currently set as constant values is in the shader for easier debugging
- // pass.defines.NUM_LIGHTS.value = lightPositions.length;
- // pass.defines.NUM_OBJECTS = globalObjectBoosts.length;
+  pass.defines = {
+    NUM_LIGHTS:{value: lightPositions.length},
+    NUM_OBJECTS:{value: globalObjectBoosts.length}
+  }
+
   return pass;
 }
 
@@ -264,10 +266,11 @@ var init = function(){
   //**********************************************
   g_composer = new THREE.EffectComposer(g_renderer);
   
+  
   //Shader Passes 
   //**********************************************
   //Raymarch
-  g_raymarch = raymarchPass();
+  g_raymarch = raymarchPass(THREE.hyper);
   g_composer.addPass(g_raymarch);
   g_raymarch.renderToScreen = true;
 

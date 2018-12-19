@@ -12,26 +12,7 @@ var g_vertexSurfaceOffset = -0.951621;
 // UI Variables
 //-------------------------------------------------------
 
-var guiInfo = { //Since dat gui can only modify object values we store variables here.
-  sceneIndex: 0,
-  toggleUI: true,
-  edgeCase:6,
-  edgeThickness:1.5,
-  eToHScale:1.0,
-  fov:90,
-  toggleStereo:false,
-  rotateEyes:false,
-  autoSteps:true,
-  maxSteps: 31,
-  halfIpDistance: 0.03200000151991844,
-  falloffModel: 1,
-  resetPosition: function(){
-    g_currentBoost.identity();
-    g_cellBoost.identity();
-    g_invCellBoost.identity();
-    g_controllerBoosts[0].identity();
-  }
-};
+var guiInfo;
 
 function updateEyes(){
   g_effect.leftEyeTranslation.x = guiInfo.eToHScale * guiInfo.halfIpDistance;
@@ -45,14 +26,27 @@ function updateEyes(){
   g_raymarch.uniforms.stereoBoosts.value[1] = rightCurrentBoost;
 }
 
-function getGeometryFrag()
-{
-	geometryFragIdx = 0;
-	if( g_geometry == Geometry.Euclidean )
-		geometryFragIdx = 1;
-	if( g_geometry == Geometry.Spherical )
-		geometryFragIdx = 2;
-	return geometryFrag[geometryFragIdx];
+function getNewScene(){
+  switch(guiInfo.sceneIndex){
+    case 0: //simplex cuts
+      if(g_geometry == Geometry.Euclidean) return raymarchPass(THREE.euclid);
+      else if(g_geometry == Geometry.Spherical) return raymarchPass(THREE.hyper);
+      return raymarchPass(THREE.hyper);
+    case 1: //edge tubes
+      if(g_geometry == Geometry.Euclidean) return raymarchPass(THREE.hyper);
+      else if(g_geometry == Geometry.Spherical) return raymarchPass(THREE.hyper);
+      return raymarchPass(THREE.hyper); 
+    case 2: //Medial Surface
+      if(g_geometry == Geometry.Euclidean) return raymarchPass(THREE.hyper);
+      else if(g_geometry == Geometry.Spherical) return raymarchPass(THREE.hyper);
+      return raymarchPass(THREE.hyper); 
+    case 3: //Cube Planes
+      if(g_geometry == Geometry.Euclidean) return raymarchPass(THREE.hyper);
+      else if(g_geometry == Geometry.Spherical) return raymarchPass(THREE.hyper);
+      return raymarchPass(THREE.hyper); 
+    default:
+      return raymarchPass(THREE.hyper); 
+  }
 }
 
 // Inputs are from the UI parameterizations.
@@ -61,7 +55,8 @@ function updateUniformsFromUI()
 {
 	// Get the number of cubes around each edge.
 	var r = guiInfo.edgeCase;
-	var p = 4, q = 3;
+  var p = 4, q = 3;
+  // p = 5; r = 4;  // Testing simplex domains.
   var g = GetGeometry( p, q, r );
   var isCubical = p == 4 && q == 3;
 
@@ -70,9 +65,9 @@ function updateUniformsFromUI()
 	if( g !== g_geometry )
 	{
 		g_geometry = g;
-    var geoFrag = getGeometryFrag();
-    g_raymarch.needsUpdate = true;
-   // g_raymarch.fragmentShader = globalsFrag.concat(geoFrag).concat(scenesFrag[guiInfo.sceneIndex]).concat(mainFrag);
+    g_raymarch = getNewScene();
+    g_raymarch.renderToScreen = true;
+    g_composer.changeRaymarchScene(g_raymarch);
     guiInfo.resetPosition();
 	}
 
@@ -106,7 +101,12 @@ function updateUniformsFromUI()
 
 	// horosphereSize
 	var midEdgeDir = new THREE.Vector3(Math.cos(Math.PI / 4), Math.cos(Math.PI / 4), 1);
-	var midEdge = constructHyperboloidPoint(midEdgeDir, g_sphereRad);
+  var midEdge = constructHyperboloidPoint(midEdgeDir, g_sphereRad);
+  
+  // Vertex location and sphere size.
+  g_vertexPosition = new THREE.Vector4( hCWK, hCWK, hCWK, 1.0 ); 
+  if( g_geometry != Geometry.Euclidean )
+    g_vertexPosition.geometryNormalize( g_geometry );
   
   switch( g_cut4 )
   {
@@ -124,6 +124,10 @@ function updateUniformsFromUI()
   case Geometry.Hyperbolic:
     g_vertexSurfaceOffset = geodesicPlaneHSDF(midEdge, g_vertexPosition, 0);
     break;
+  }
+
+  if( !isCubical ) {
+    g_vertexSurfaceOffset = 0;
   }
 
   initGenerators(p,q,r);
@@ -152,6 +156,27 @@ function updateUniformsFromUI()
 
 //What we need to init our dat GUI
 var initGui = function(){
+  guiInfo = {
+    sceneIndex: 0,
+    toggleUI: true,
+    edgeCase:6,
+    edgeThickness:1.5,
+    eToHScale:1.0,
+    fov:90,
+    toggleStereo:false,
+    rotateEyes:false,
+    autoSteps:true,
+    maxSteps: 31,
+    halfIpDistance: 0.03200000151991844,
+    falloffModel: 1,
+    resetPosition: function(){
+      g_currentBoost.identity();
+      g_cellBoost.identity();
+      g_invCellBoost.identity();
+      g_controllerBoosts[0].identity();
+    }
+  }
+
   var gui = new dat.GUI();
   gui.close();
   //scene settings ---------------------------------
