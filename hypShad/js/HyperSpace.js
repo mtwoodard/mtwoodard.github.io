@@ -56,6 +56,7 @@ var initObjects = function(){
   PointLightObject(new THREE.Vector3(0,1.2,0), new THREE.Vector4(0,1,0,1));
   PointLightObject(new THREE.Vector3(0,0,1.2), new THREE.Vector4(0,0,1,1));
   PointLightObject(new THREE.Vector3(-1,-1,-1), new THREE.Vector4(1,1,1,1));
+  
   globalObjectBoost = new THREE.Matrix4().multiply(translateByVector(new THREE.Vector3(-0.5,0.5,0)));
 }
 

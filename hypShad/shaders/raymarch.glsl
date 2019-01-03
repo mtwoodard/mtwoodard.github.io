@@ -143,7 +143,7 @@ BEGIN FRAGMENT
     //Light Objects
     //This somehow messes up the shadow march, returns < EPSILON
     if(collideWithLights){
-      for(int i=0; i<4; i++){
+      for(int i=0; i<3; i++){
         float objDist;
         objDist = sphereSDF(samplePoint, lightPositions[i] * globalTransMatrix, 1.0/(10.0*lightIntensities[i].w));
         distance = min(distance, objDist);
@@ -163,11 +163,43 @@ BEGIN FRAGMENT
     }
     return distance;
   }
+
+    
+  // This function is intended to be hyp-agnostic.
+  // We should update some of the variable names.
+  bool isOutsideCell(vec4 samplePoint, out mat4 fixMatrix){
+    vec4 kleinSamplePoint = samplePoint/samplePoint.w; //project to klein
+    if(kleinSamplePoint.x > halfCubeWidthKlein){
+      fixMatrix = invGenerators[0];
+      return true;
+    }
+    if(kleinSamplePoint.x < -halfCubeWidthKlein){
+      fixMatrix = invGenerators[1];
+      return true;
+    }
+    if(kleinSamplePoint.y > halfCubeWidthKlein){
+      fixMatrix = invGenerators[2];
+      return true;
+    }
+    if(kleinSamplePoint.y < -halfCubeWidthKlein){
+      fixMatrix = invGenerators[3];
+      return true;
+    }
+    if(kleinSamplePoint.z > halfCubeWidthKlein){
+      fixMatrix = invGenerators[4];
+      return true;
+    }
+    if(kleinSamplePoint.z < -halfCubeWidthKlein){
+      fixMatrix = invGenerators[5];
+      return true;
+    }
+    return false;
+  }
   
   //--------------------------------------------------------------------
   // Lighting Functions
   //--------------------------------------------------------------------
-
+/*
   float shadowMarch(vec4 origin, vec4 dirToLight, float distToLight, mat4 globalTransMatrix){
     float globalDepth = EPSILON * 100.0;
     for(int i = 0; i< MAX_MARCHING_STEPS; i++){
@@ -181,6 +213,91 @@ BEGIN FRAGMENT
         return 1.0;
       }
     }
+    return 1.0;
+  }
+ 
+  float shadowMarch(vec4 origin, vec4 tlp, mat4 globalTransMatrix){
+    float localDepth = EPSILON * 100.0;
+    float globalDepth = localDepth;
+
+    float distToLight = hypDistance(origin, tlp);
+    vec4 localrO = origin; 
+    vec4 localrD = hypDirection(origin, tlp);
+    
+    mat4 fixMatrix = mat4(1.0);
+
+    for(int i = 0; i < MAX_MARCHING_STEPS; i++){
+      vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
+
+      if(isOutsideCell(localEndPoint, fixMatrix)){
+        localrO = hypNormalize(localEndPoint*fixMatrix);
+        localrD = hypDirection(localrO, localrD*fixMatrix);
+        localDepth = MIN_DIST;
+      }
+
+      else{
+        float localDist = min(0.5, localSceneSDF(localEndPoint));
+
+        if(localDist < EPSILON){
+          return 0.0;
+        }
+
+        localDepth += localDist;
+        globalDepth += localDist;
+
+        if(globalDepth > distToLight){
+          return 1.0;
+        }
+      }
+
+    }
+    return 1.0;
+  }
+*/
+
+  float shadowMarch(vec4 origin, vec4 dirToLight, float distToLight, mat4 globalTransMatrix){
+    float localDepth = EPSILON * 100.0;
+    float globalDepth = localDepth;
+    vec4 localrO = origin; 
+    vec4 localrD = dirToLight;
+    mat4 fixMatrix = mat4(1.0);
+
+    //local trace
+    for(int i = 0; i < MAX_MARCHING_STEPS; i++){
+      vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
+
+      if(isOutsideCell(localEndPoint, fixMatrix)){
+        localrO = hypNormalize(localEndPoint*fixMatrix);
+        localrD = hypDirection(localrO, localrD*fixMatrix);
+        localDepth = MIN_DIST;
+      }
+      else{
+        float localDist = min(0.5, localSceneSDF(localEndPoint));
+        if(localDist < EPSILON){
+          return 0.0;
+        }
+        localDepth += localDist;
+        globalDepth += localDist;
+        if(globalDepth > distToLight){
+          break;
+        }
+      }
+    }
+    
+    globalDepth = EPSILON * 100.0;
+    //global trace
+    for(int i = 0; i< MAX_MARCHING_STEPS; i++){
+      vec4 globalEndPoint = pointOnGeodesic(origin, dirToLight, globalDepth);
+      float globalDist = globalSceneSDF(globalEndPoint,  globalTransMatrix, false);
+      if(globalDist < EPSILON){
+        return 0.0;
+      }
+      globalDepth += globalDist;
+      if(globalDepth > distToLight){
+        return 1.0;
+      }
+    }
+    
     return 1.0;
   }
 
@@ -216,7 +333,7 @@ BEGIN FRAGMENT
     //--------------------------------------------------
     //usually we'd check to ensure there are 4 lights
     //however this is version is hardcoded so we won't
-    for(int i = 0; i<4; i++){ 
+    for(int i = 0; i<3; i++){ 
         TLP = lightPositions[i]*globalTransMatrix;
         color += lightingCalculations(SP, TLP, V, vec3(1.0), lightIntensities[i], globalTransMatrix);
     }
@@ -256,37 +373,6 @@ BEGIN FRAGMENT
     float z = 0.1/tan(radians(fov*0.5));
     vec4 p =  hypNormalize(vec4(xy,-z,1.0));
     return p;
-  }
-  
-  // This function is intended to be hyp-agnostic.
-  // We should update some of the variable names.
-  bool isOutsideCell(vec4 samplePoint, out mat4 fixMatrix){
-    vec4 kleinSamplePoint = samplePoint/samplePoint.w; //project to klein
-    if(kleinSamplePoint.x > halfCubeWidthKlein){
-      fixMatrix = invGenerators[0];
-      return true;
-    }
-    if(kleinSamplePoint.x < -halfCubeWidthKlein){
-      fixMatrix = invGenerators[1];
-      return true;
-    }
-    if(kleinSamplePoint.y > halfCubeWidthKlein){
-      fixMatrix = invGenerators[2];
-      return true;
-    }
-    if(kleinSamplePoint.y < -halfCubeWidthKlein){
-      fixMatrix = invGenerators[3];
-      return true;
-    }
-    if(kleinSamplePoint.z > halfCubeWidthKlein){
-      fixMatrix = invGenerators[4];
-      return true;
-    }
-    if(kleinSamplePoint.z < -halfCubeWidthKlein){
-      fixMatrix = invGenerators[5];
-      return true;
-    }
-    return false;
   }
   
   void raymarch(vec4 rO, vec4 rD, out mat4 totalFixMatrix){
