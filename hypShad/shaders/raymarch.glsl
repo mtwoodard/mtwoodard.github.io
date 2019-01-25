@@ -163,7 +163,6 @@ BEGIN FRAGMENT
     }
     return distance;
   }
-
     
   // This function is intended to be hyp-agnostic.
   // We should update some of the variable names.
@@ -199,62 +198,6 @@ BEGIN FRAGMENT
   //--------------------------------------------------------------------
   // Lighting Functions
   //--------------------------------------------------------------------
-/*
-  float shadowMarch(vec4 origin, vec4 dirToLight, float distToLight, mat4 globalTransMatrix){
-    float globalDepth = EPSILON * 100.0;
-    for(int i = 0; i< MAX_MARCHING_STEPS; i++){
-      vec4 globalEndPoint = pointOnGeodesic(origin, dirToLight, globalDepth);
-      float globalDist = globalSceneSDF(globalEndPoint,  globalTransMatrix, false);
-      if(globalDist < EPSILON){
-        return 0.0;
-      }
-      globalDepth += globalDist;
-      if(globalDepth > distToLight){
-        return 1.0;
-      }
-    }
-    return 1.0;
-  }
- 
-  float shadowMarch(vec4 origin, vec4 tlp, mat4 globalTransMatrix){
-    float localDepth = EPSILON * 100.0;
-    float globalDepth = localDepth;
-
-    float distToLight = hypDistance(origin, tlp);
-    vec4 localrO = origin; 
-    vec4 localrD = hypDirection(origin, tlp);
-    
-    mat4 fixMatrix = mat4(1.0);
-
-    for(int i = 0; i < MAX_MARCHING_STEPS; i++){
-      vec4 localEndPoint = pointOnGeodesic(localrO, localrD, localDepth);
-
-      if(isOutsideCell(localEndPoint, fixMatrix)){
-        localrO = hypNormalize(localEndPoint*fixMatrix);
-        localrD = hypDirection(localrO, localrD*fixMatrix);
-        localDepth = MIN_DIST;
-      }
-
-      else{
-        float localDist = min(0.5, localSceneSDF(localEndPoint));
-
-        if(localDist < EPSILON){
-          return 0.0;
-        }
-
-        localDepth += localDist;
-        globalDepth += localDist;
-
-        if(globalDepth > distToLight){
-          return 1.0;
-        }
-      }
-
-    }
-    return 1.0;
-  }
-*/
-
   float shadowMarch(vec4 origin, vec4 dirToLight, float distToLight, mat4 globalTransMatrix){
     float localDepth = EPSILON * 100.0;
     float globalDepth = localDepth;
@@ -337,6 +280,7 @@ BEGIN FRAGMENT
         TLP = lightPositions[i]*globalTransMatrix;
         color += lightingCalculations(SP, TLP, V, vec3(1.0), lightIntensities[i], globalTransMatrix);
     }
+
     return color;
   }
   
