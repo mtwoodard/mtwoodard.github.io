@@ -67,6 +67,12 @@ input[type=text]:focus, textarea:focus {
   text-align: center;
 }
 
+.portfolio-gallery
+{
+  padding-right: 50px;
+  padding-bottom: 20px;
+}
+
 @media(min-width:550px) {
   .header {
     margin-top: 20rem;
