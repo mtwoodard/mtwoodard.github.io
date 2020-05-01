@@ -85,7 +85,7 @@ input[type=text]:focus, textarea:focus {
     transition-duration: 1s;
   }
   .index-image:hover {
-    transform: scale(1.5);
+    transform: scale(1.25);
     -webkit-transition-duration: 1s;
     -moz-transition-duration: 1s;
     -o-transition-duration: 1s;
