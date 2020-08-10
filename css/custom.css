@@ -6,7 +6,7 @@ body {
 
 a {
   text-decoration: none;
-  color: grey;
+  color: #fe9720;
   font-weight: bold;
   -webkit-transition-duration: 0.5s;
   -moz-transition-duration: 0.5s;
@@ -15,7 +15,7 @@ a {
 }
 
 a:hover {
-  color: #fe9720;
+  color:  #ffc685;
   font-weight: bold;
   -webkit-transition-duration: 0.5s;
   -moz-transition-duration: 0.5s;
