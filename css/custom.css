@@ -4,10 +4,13 @@ body {
   background: url(../images/cubes.png) repeat 0 0;
 }
 
+h1, h2, h3, h4{
+  color: #fe9720;
+}
+
 a {
   text-decoration: none;
   color: #fe9720;
-  font-weight: bold;
   -webkit-transition-duration: 0.5s;
   -moz-transition-duration: 0.5s;
   -o-transition-duration: 0.5s;
@@ -16,7 +19,6 @@ a {
 
 a:hover {
   color:  #ffc685;
-  font-weight: bold;
   -webkit-transition-duration: 0.5s;
   -moz-transition-duration: 0.5s;
   -o-transition-duration: 0.5s;
@@ -91,6 +93,15 @@ input[type=text]:focus, textarea:focus {
     -o-transition-duration: 1s;
     transition-duration: 1s;
   }
+
+  .portfolio-video
+  {
+    width: 512px;
+    height: 288px;
+    border: 5px solid #fe9720;
+    margin-bottom: 20px;
+  }
+
   .portfolio-image:hover {
     transform: scale(1.1);
     -webkit-transition-duration: 1s;
@@ -138,8 +149,9 @@ input[type=text]:focus, textarea:focus {
   .navbar-item {
     position: relative;
     float: left;
+    font-size: 1.75rem;
     margin: 1rem;
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
   }
   .navbar-logo {
     position: relative;
@@ -155,6 +167,15 @@ input[type=text]:focus, textarea:focus {
     margin-top: -40px;
     text-align: center;
   }
+
+  .portfolio-video
+  {
+    width: 384px;
+    height: 216px;
+    border: 5px solid #fe9720;
+    margin-bottom: 20px;
+  }
+
   .portfolio-slide {
     padding-top: 4rem;
   }
